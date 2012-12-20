@@ -9,7 +9,6 @@
 
 MEMORY
 {
-    ROM   (rx)  : ORIGIN = 0x402F0000, LENGTH = 1K
     SRAM  (rwx) : ORIGIN = 0x402F0400, LENGTH = 62K
     STACK (rwx) : ORIGIN = 0x402FFC00, LENGTH = 1K
 }
