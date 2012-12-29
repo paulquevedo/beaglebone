@@ -1,27 +1,6 @@
 #include "globalDefs.h"
 #include "am335x.h"
-
-enum {
-    GPIO_CFG_INPUT  = BIT_0,
-    GPIO_CFG_OUTPUT = BIT_1,
-};
-
-void gpioConfig(uint32_t base, uint32_t pin, uint32_t opt)
-{
-    if (opt & GPIO_CFG_OUTPUT)
-        GPIO_OE(base) &= ~(1 << pin);
-    else if (opt & GPIO_CFG_INPUT)
-        GPIO_OE(base) |=  (1 << pin);
-}
-
-void gpioSet(uint32_t base, uint32_t pin)
-{
-    GPIO_SETDATAOUT(base) = (1 << pin);
-}
-void gpioClear(uint32_t base, uint32_t pin)
-{
-    GPIO_CLEARDATAOUT(base) = (1 << pin);
-}
+#include "hardware.h"
 
 static void delay(uint32_t count)
 {
@@ -58,21 +37,10 @@ int main(void)
     /* Enable control module clock */
     CM_MODULEMODE_ENABLE(CM_WKUP_CONTROL_CLKCTRL);
 
-    /* Enable GPIO1 Clock */
-    CM_MODULEMODE_ENABLE(CM_PER_GPIO1_CLKCTRL);
-    /* Enable Debounce Functional Clk */
-    CM_PER_GPIO1_CLKCTRL |= BIT_18;
-    /* Wait for clock activity */
-    while(!(CM_PER_L4LS_CLKSTCTRL & CLKACTIVITY_GPIO_1_GDBCLK))
-        ;
-
-    CTRLM_CONF_GPMC_A(7) = CTRLM_CONF_MUXMODE(7);
-    gpioConfig(GPIO1_BASE_ADDR, 23, GPIO_CFG_OUTPUT);
+    gpioConfig(HW_LED0_PORT, HW_LED0_PIN, GPIO_CFG_OUTPUT);
 
     while (1) {
-        gpioClear(GPIO1_BASE_ADDR, 23);
-        delay(0x3FFFF);
-        gpioSet(GPIO1_BASE_ADDR, 23);
+        gpioToggle(HW_LED0_PORT, HW_LED0_PIN);
         delay(0x3FFFF);
     }
 
