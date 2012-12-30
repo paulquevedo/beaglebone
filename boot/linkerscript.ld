@@ -1,5 +1,5 @@
 /******************************************************************************
- * boot_linkerscript.ld
+ * linkerscript.ld
  *
  * Bootloader linker script for the TI AM3559/BeagleBone
  *

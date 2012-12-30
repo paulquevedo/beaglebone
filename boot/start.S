@@ -1,5 +1,5 @@
 /******************************************************************************
- * boot_start.S
+ * start.S
  *
  * Startup code for the am335x beaglebone
  *

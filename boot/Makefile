@@ -10,11 +10,12 @@ TARGET = boot
 
 # List your asm files here (minus the .s):
 
-ASM_PIECES = boot_start
+ASM_PIECES = start
 
 # List your c files here (minus the .c):
 
-C_PIECES = boot gpio
+C_PIECES  = boot
+C_PIECES += ../gpio
 
 # Define Hardware Platform
 PROCESSOR  = AM335X
@@ -22,7 +23,7 @@ START_ADDR = 0x402F0400 #Must match linkerscript origin addr
 BOOT_MODE  = MMCSD
 
 SOURCERY = /opt/CodeSourcery/Sourcery_CodeBench_Lite_for_ARM_EABI
-STARTERWARE = ../StarterWare
+STARTERWARE = ../../StarterWare
 PATH :=/opt/CodeSourcery/Sourcery_CodeBench_Lite_for_ARM_EABI/bin:${PATH}
 CC = arm-none-eabi-gcc
 AS = arm-none-eabi-as
@@ -46,8 +47,9 @@ C_O_FILES = ${C_FILES:%.c=%.o}
 O_FILES = ${ASM_O_FILES} ${C_O_FILES}
 
 CPU_FLAGS = -mcpu=cortex-a8 -mlong-calls -mthumb-interwork -ffunction-sections
+INCLUDE   = ../
 
-LD_SCRIPT = boot_linkerscript.ld
+LD_SCRIPT = linkerscript.ld
 
 # nostartfiles prevents the toolchain from including startup routines.
 LD_FLAGS = -nostartfiles -Map=${TARGET}.map
@@ -77,13 +79,14 @@ ${TARGET}.axf: ${O_FILES}
 	${AS} ${ASM_FLAGS} ${CPU_FLAGS} -o $@ $<
 
 %.o: %.c
-	${CC} ${C_FLAGS} ${CPU_FLAGS} -o $@ $<
+	${CC} ${C_FLAGS} -I${INCLUDE} ${CPU_FLAGS} -o $@ $<
 
 clean:
 	@echo
 	@echo Cleaning up...
 	@echo
 	rm -f *.o
+	rm -f ../*.o
 	rm -f ${TARGET}.axf
 	rm -f ${TARGET}.out.s
 	rm -f ${TARGET}.bin
