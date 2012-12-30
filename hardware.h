@@ -14,6 +14,17 @@
 /**********************
  * Board Defines
  *********************/
+#define MASTER_OSC 24000000 /* 24MHz crystal */
+
+/* DDR PLL
+ * CLK_M_OSC is 24MHz.
+ * CLK_OUT   is CLK_M_OSC * M / ((N + 1) * M2)
+ *           defined in s7.3.3.2 of am335x TRM */
+#define DDR_OSC 266000000
+#define DDR_PLL_M  266
+#define DDR_PLL_N  23
+#define DDR_PLL_M2 1
+
 #define HW_LED0_PORT GPIO1_BASE_ADDR
 #define HW_LED0_PIN  21
 #define HW_LED1_PORT GPIO1_BASE_ADDR
