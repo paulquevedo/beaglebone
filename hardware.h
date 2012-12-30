@@ -25,6 +25,7 @@
 #define DDR_PLL_N  23
 #define DDR_PLL_M2 1
 
+/* User LEDs */
 #define HW_LED0_PORT GPIO1_BASE_ADDR
 #define HW_LED0_PIN  21
 #define HW_LED1_PORT GPIO1_BASE_ADDR

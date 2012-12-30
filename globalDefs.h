@@ -2,7 +2,7 @@
 *
 * globalDefs.h
 *
-* Paul Quevedo
+* Paul Quevedo 2012
 *
 *******************************************************************************/
 #ifndef __GLOBALDEFS_H__

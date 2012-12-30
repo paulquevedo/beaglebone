@@ -1,5 +1,5 @@
 /******************************************************************************
- * gpio
+ * gpio.c
  *
  * GPIO Driver for the beaglebone/am335x processor
  *

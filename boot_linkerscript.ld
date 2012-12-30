@@ -1,11 +1,10 @@
-/*
+/******************************************************************************
  * boot_linkerscript.ld
  *
  * Bootloader linker script for the TI AM3559/BeagleBone
  *
- * Paul Quevedo
- * Dec 19 2012
- */
+ * Paul Quevedo 2012
+ ******************************************************************************/
 
 MEMORY
 {

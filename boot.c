@@ -1,3 +1,10 @@
+/******************************************************************************
+ * boot.c
+ *
+ * Bootloader for the am335x beaglebone
+ *
+ * Paul Quevedo 2012
+ *****************************************************************************/
 #include "globalDefs.h"
 #include "am335x.h"
 #include "hardware.h"
