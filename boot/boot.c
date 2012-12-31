@@ -21,7 +21,7 @@ static void clkDDRInit(void)
     /* 1. Switch PLL to bypass mode */
     volatile uint32_t value;
     value  = CM_CLKMODE_DPLL_DDR    & ~CM_DPLL_EN_MASK;
-    value |= CM_DPLL_EN_MN_BYP_MODE << CM_DPLL_EN_SHIFT;
+    value |= CM_DPLL_EN_MN_BYP_MODE << CM_DPLL_EN_SHFT;
     CM_CLKMODE_DPLL_DDR = value;
 
     /* 2. Wait for PLL to be in bypass */
@@ -30,18 +30,18 @@ static void clkDDRInit(void)
 
     /* 3. Configure PLL mult and div */
     value  = CM_CLKSEL_DPLL_DDR & ~(CM_DPLL_MULT_MASK | CM_DPLL_DIV_MASK);
-    value |= DDR_PLL_M << CM_DPLL_MULT_SHIFT;
-    value |= DDR_PLL_N << CM_DPLL_DIV_SHIFT;
+    value |= DDR_PLL_M << CM_DPLL_MULT_SHFT;
+    value |= DDR_PLL_N << CM_DPLL_DIV_SHFT;
     CM_CLKSEL_DPLL_DDR = value;
 
     /* 4. Configure M2 Divider */
     value  = CM_DIV_M2_DPLL_DDR & ~CM_DPLL_M2_CLKOUT_DIV_MASK;
-    value |= DDR_PLL_M2 << CM_DPLL_M2_CLKOUT_DIV_SHIFT;
+    value |= DDR_PLL_M2 << CM_DPLL_M2_CLKOUT_DIV_SHFT;
     CM_DIV_M2_DPLL_DDR = value;
 
     /* 5. Switch PLL to lock mode */
     value  = CM_CLKMODE_DPLL_DDR  & ~CM_DPLL_EN_MASK;
-    value |= CM_DPLL_EN_LOCK_MODE << CM_DPLL_EN_SHIFT;
+    value |= CM_DPLL_EN_LOCK_MODE << CM_DPLL_EN_SHFT;
     CM_CLKMODE_DPLL_DDR = value;
 
     /* 6. Wait for PLL to lock */
@@ -183,6 +183,12 @@ static int ddrtest(void)
 
 int main(void)
 {
+    uartCfg_t uartCfg = {
+        .baud = BAUD_115200,
+        .fifo = { .enable = TRUE,
+                  .rxTrig = 1,
+                  .txTrig = 1, },
+    };
     /* Disable watchdog */
     WDT_WSPR = 0xAAAA;
     while (WDT_WWPS & WDT_WWPS_W_PEND_WSPR)
@@ -213,6 +219,7 @@ int main(void)
     clkDDRInit();
     emifInit();
     ddr2Init();
+    uartConfig(UART_0, &uartCfg);
 
     gpioConfig(HW_LED0_PORT, HW_LED0_PIN, GPIO_CFG_OUTPUT);
     gpioConfig(HW_LED1_PORT, HW_LED1_PIN, GPIO_CFG_OUTPUT);

@@ -103,22 +103,37 @@
 #define CM_PER_CLKDIV32K_CLKCTRL   HWREG32(CM_PER_BASE_ADDR + 0x14C)
 #define CM_PER_CLK_24MHZ_CLKSTCTRL HWREG32(CM_PER_BASE_ADDR + 0x150)
 
+/* CM_WKUP_CLKSTCTRL Bits */
+#define CM_CLKACTIVITY_ADC_FCLK      BIT_14
+#define CM_CLKACTIVITY_TIMER1_GCLK   BIT_13
+#define CM_CLKACTIVITY_UART0_GFCLK   BIT_12
+#define CM_CLKACTIVITY_I2C0_GFCLK    BIT_11
+#define CM_CLKACTIVITY_TIMER0_GCLK   BIT_10
+#define CM_CLKACTIVITY_GPIO0_GDBCLK  BIT_8
+#define CM_CLKACTIVITY_WDT1_GCLK     BIT_4
+#define CM_CLKACTIVITY_SR_SYSCLK     BIT_3
+#define CM_CLKACTIVITY_L4_WKUP_GCLK  BIT_2
+
 /* CM_PER_L4LS_CLKSTCTRL Bits */
-#define CLKACTIVITY_TIMER6_GCLK   BIT_28
-#define CLKACTIVITY_TIMER5_GCLK   BIT_27
-#define CLKACTIVITY_SPI_GCLK      BIT_25
-#define CLKACTIVITY_I2C_FCLK      BIT_24
-#define CLKACTIVITY_GPIO_3_GDBCLK BIT_21
-#define CLKACTIVITY_GPIO_2_GDBCLK BIT_20
-#define CLKACTIVITY_GPIO_1_GDBCLK BIT_19
-#define CLKACTIVITY_LCDC_GCLK     BIT_17
-#define CLKACTIVITY_TIMER4_GCLK   BIT_16
-#define CLKACTIVITY_TIMER3_GCLK   BIT_15
-#define CLKACTIVITY_TIMER2_GCLK   BIT_14
-#define CLKACTIVITY_TIMER7_GCLK   BIT_13
-#define CLKACTIVITY_CAN_CLK       BIT_11
-#define CLKACTIVITY_UART_GFCLK    BIT_10
-#define CLKACTIVITY_L4LS_GCLK     BIT_8
+#define CM_CLKACTIVITY_TIMER6_GCLK   BIT_28
+#define CM_CLKACTIVITY_TIMER5_GCLK   BIT_27
+#define CM_CLKACTIVITY_SPI_GCLK      BIT_25
+#define CM_CLKACTIVITY_I2C_FCLK      BIT_24
+#define CM_CLKACTIVITY_GPIO_3_GDBCLK BIT_21
+#define CM_CLKACTIVITY_GPIO_2_GDBCLK BIT_20
+#define CM_CLKACTIVITY_GPIO_1_GDBCLK BIT_19
+#define CM_CLKACTIVITY_LCDC_GCLK     BIT_17
+#define CM_CLKACTIVITY_TIMER4_GCLK   BIT_16
+#define CM_CLKACTIVITY_TIMER3_GCLK   BIT_15
+#define CM_CLKACTIVITY_TIMER2_GCLK   BIT_14
+#define CM_CLKACTIVITY_TIMER7_GCLK   BIT_13
+#define CM_CLKACTIVITY_CAN_CLK       BIT_11
+#define CM_CLKACTIVITY_UART_GFCLK    BIT_10
+#define CM_CLKACTIVITY_L4LS_GCLK     BIT_8
+
+/* CM_PER_L3_CLKSTCTRL Values */
+#define CM_CLKSTCTRL_CLKACTIVITY_EMIF_GCLK BIT_2
+#define CM_CLKSTCTRL_CLKACTIVITY_L3_GCLK   BIT_4
 
 /******************** CLOCK MODULE WAKEUP ************************************/
 #define CM_WKUP_BASE_ADDR 0x44E00400
@@ -182,6 +197,14 @@
 #define CM_CLKTRCTRL_SW_SLEEP 0x1
 #define CM_CLKTRCTRL_SW_WKUP  0x2
 
+#define CM_MODULE_IDLEST_MASK (BIT_16 | BIT_17)
+#define CM_MODULE_IDLEST_FUNC(addr) \
+    while (((addr) & CM_MODULE_IDLEST_MASK) != 0x00000) { }
+#define CM_MODULE_IDLEST_IDLE(addr) \
+    while (((addr) & CM_MODULE_IDLEST_MASK) != 0x20000) { }
+#define CM_MODULE_IDLEST_DSBL(addr) \
+    while (((addr) & CM_MODULE_IDLEST_MASK) != 0x30000) { }
+
 #define CM_MODULEMODE_MASK (BIT_1 | BIT_0)
 #define CM_MODULEMODE_DISABLE(addr) {                 \
     addr &= ~(CM_MODULEMODE_MASK);                    \
@@ -192,13 +215,9 @@
     while (((addr) & CM_MODULEMODE_MASK) != 0x2) { }  \
 }
 
-/* CM_PER_L3_CLKSTCTRL Values */
-#define CM_CLKSTCTRL_CLKACTIVITY_EMIF_GCLK BIT_2
-#define CM_CLKSTCTRL_CLKACTIVITY_L3_GCLK   BIT_4
-
 /* CM_CLKMODE_DPLL_xxx Values */
-#define CM_DPLL_EN_MASK  0x7
-#define CM_DPLL_EN_SHIFT 0
+#define CM_DPLL_EN_MASK 0x7
+#define CM_DPLL_EN_SHFT 0
 #define CM_DPLL_EN_MN_BYP_MODE 0x4
 #define CM_DPLL_EN_LP_BYP_MODE 0x5
 #define CM_DPLL_EN_FR_BYP_MODE 0x6
@@ -209,15 +228,15 @@
 #define CM_DPLL_ST_DPLL_CLK  BIT_0
 
 /* CM_CLKSEL_DPLL_xxx Values */
-#define CM_DPLL_MULT_MASK  0x7FF00
-#define CM_DPLL_MULT_SHIFT 8
+#define CM_DPLL_MULT_MASK 0x7FF00
+#define CM_DPLL_MULT_SHFT 8
 
-#define CM_DPLL_DIV_MASK   0x7F
-#define CM_DPLL_DIV_SHIFT  0
+#define CM_DPLL_DIV_MASK  0x7F
+#define CM_DPLL_DIV_SHFT  0
 
 /* CM_DIV_M2_DPLL_xxx Values */
 #define CM_DPLL_M2_CLKOUT_DIV_MASK  0x1F
-#define CM_DPLL_M2_CLKOUT_DIV_SHIFT 0
+#define CM_DPLL_M2_CLKOUT_DIV_SHFT  0
 
 /******************** CONTROL MODULE *****************************************/
 #define CTRLM_BASE_ADDR 0x44E10000
@@ -405,6 +424,10 @@
 #define CTRLM_DDR_DATA0_IOCTRL          HWREG32(CTRLM_BASE_ADDR + 0x1440)
 #define CTRLM_DDR_DATA1_IOCTRL          HWREG32(CTRLM_BASE_ADDR + 0x1444)
 
+#define CTRLM_CONF_SLEWCTRL   BIT_6
+#define CTRLM_CONF_RXACTIVE   BIT_5
+#define CTRLM_CONF_PUTYPESEL  BIT_4
+#define CTRLM_CONF_PUDEN      BIT_3
 #define CTRLM_CONF_MUXMODE(n) ((n) & 0x7)
 
 #define CTRLM_VTP_CTRL_CLRZ   BIT_0
@@ -532,4 +555,101 @@
 #define GPIO_DEBOUNCINGTIME(base)   HWREG32((base) + 0x154)
 #define GPIO_CLEARDATAOUT(base)     HWREG32((base) + 0x190)
 #define GPIO_SETDATAOUT(base)       HWREG32((base) + 0x194)
+
+/*********************** UART MODULE *****************************************/
+#define UART0_BASE_ADDR 0x44E09000
+#define UART1_BASE_ADDR 0x48022000
+#define UART2_BASE_ADDR 0x48024000
+#define UART3_BASE_ADDR 0x481A6000
+#define UART4_BASE_ADDR 0x481A8000
+#define UART5_BASE_ADDR 0x481AA000
+
+#define UART_DLL(base)              HWREG32((base) + 0x00)
+#define UART_RHR(base)              HWREG32((base) + 0x00)
+#define UART_THR(base)              HWREG32((base) + 0x00)
+#define UART_DLH(base)              HWREG32((base) + 0x04)
+#define UART_IER(base)              HWREG32((base) + 0x04)
+#define UART_EFR(base)              HWREG32((base) + 0x08)
+#define UART_FCR(base)              HWREG32((base) + 0x08)
+#define UART_IIR(base)              HWREG32((base) + 0x08)
+#define UART_LCR(base)              HWREG32((base) + 0x0C)
+#define UART_MCR(base)              HWREG32((base) + 0x10)
+#define UART_XON1_ADDR1(base)       HWREG32((base) + 0x10)
+#define UART_LSR(base)              HWREG32((base) + 0x14)
+#define UART_XON2_ADDR2(base)       HWREG32((base) + 0x14)
+#define UART_MSR(base)              HWREG32((base) + 0x18)
+#define UART_TCR(base)              HWREG32((base) + 0x18)
+#define UART_XOFF1(base)            HWREG32((base) + 0x18)
+#define UART_SPR(base)              HWREG32((base) + 0x1C)
+#define UART_TLR(base)              HWREG32((base) + 0x1C)
+#define UART_XOFF2(base)            HWREG32((base) + 0x1C)
+#define UART_MDR1(base)             HWREG32((base) + 0x20)
+#define UART_MDR2(base)             HWREG32((base) + 0x24)
+#define UART_SFLSR(base)            HWREG32((base) + 0x28)
+#define UART_TXFLL(base)            HWREG32((base) + 0x28)
+#define UART_RESUME(base)           HWREG32((base) + 0x2C)
+#define UART_TXFLH(base)            HWREG32((base) + 0x2C)
+#define UART_RXFLL(base)            HWREG32((base) + 0x30)
+#define UART_SFREGL(base)           HWREG32((base) + 0x30)
+#define UART_RXFLH(base)            HWREG32((base) + 0x34)
+#define UART_SFREGH(base)           HWREG32((base) + 0x34)
+#define UART_BLR(base)              HWREG32((base) + 0x38)
+#define UART_UASR(base)             HWREG32((base) + 0x38)
+#define UART_ACREG(base)            HWREG32((base) + 0x3C)
+#define UART_SCR(base)              HWREG32((base) + 0x40)
+#define UART_SSR(base)              HWREG32((base) + 0x44)
+#define UART_EBLR(base)             HWREG32((base) + 0x48)
+#define UART_MVR(base)              HWREG32((base) + 0x50)
+#define UART_SYSC(base)             HWREG32((base) + 0x54)
+#define UART_SYSS(base)             HWREG32((base) + 0x58)
+#define UART_WER(base)              HWREG32((base) + 0x5C)
+#define UART_CFPS(base)             HWREG32((base) + 0x60)
+#define UART_RXFIFO_LVL(base)       HWREG32((base) + 0x64)
+#define UART_TXFIFO_LVL(base)       HWREG32((base) + 0x68)
+#define UART_IER2(base)             HWREG32((base) + 0x6C)
+#define UART_ISR2(base)             HWREG32((base) + 0x70)
+#define UART_FREQ_SEL(base)         HWREG32((base) + 0x74)
+#define UART_MDR3(base)             HWREG32((base) + 0x80)
+#define UART_TX_DMA_THRESHOLD(base) HWREG32((base) + 0x84)
+
+#define UART_FCR_RX_FIFO_TRIG_MASK (BIT_7 | BIT_6)
+#define UART_FCR_RX_FIFO_TRIG_SHFT  6
+#define UART_FCR_TX_FIFO_TRIG_MASK (BIT_5 | BIT_4)
+#define UART_FCR_TX_FIFO_TRIG_SHFT  4
+#define UART_FCR_DMA_MODE           BIT_3
+#define UART_FCR_TX_FIFO_CLEAR      BIT_2
+#define UART_FCR_RX_FIFO_CLEAR      BIT_1
+#define UART_FCR_FIFO_EN            BIT_0
+
+#define UART_LCR_DIV_EN            BIT_7
+#define UART_LCR_BREAK_EN          BIT_6
+#define UART_LCR_PARITY_TYPE2      BIT_5
+#define UART_LCR_PARITY_TYPE1      BIT_4
+#define UART_LCR_PARITY_EN         BIT_3
+#define UART_LCR_NB_STOP           BIT_2
+#define UART_LCR_CHAR_LENGTH_MASK (BIT_0 | BIT_1)
+#define UART_LCR_CHAR_LENGTH_SHFT  0
+
+#define UART_EFR_AUTOCTSEN          BIT_7
+#define UART_EFR_AUTORTSEN          BIT_6
+#define UART_EFR_SPECIALCHARDETECT  BIT_5
+#define UART_EFR_ENHANCEDEN         BIT_4
+#define UART_EFR_SWFLOWCONTROL_MASK 0xF
+#define UART_EFR_SWFLOWCONTROL_SHFT 0
+
+#define UART_MCR_TCRTLR     BIT_6
+#define UART_MCR_XONEN      BIT_5
+#define UART_MCR_LOOPBACKEN BIT_4
+#define UART_MCR_CDSTSCH    BIT_3
+#define UART_MCR_RISTSCH    BIT_2
+#define UART_MCR_RTS        BIT_1
+#define UART_MCR_DTR        BIT_0
+
+#define UART_TLR_RX_FIFO_TRIG_MASK 0xF0
+#define UART_TLR_RX_FIFO_TRIG_SHFT 4
+#define UART_TLR_TX_FIFO_TRIG_MASK 0x0F
+#define UART_TLR_TX_FIFO_TRIG_SHFT 0
+
+#define UART_SCR_RX_TRIG_GRANU1 BIT_7
+#define UART_SCR_TX_TRIG_GRANU1 BIT_6
 #endif

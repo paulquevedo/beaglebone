@@ -15,7 +15,7 @@ ASM_PIECES = start
 # List your c files here (minus the .c):
 
 C_PIECES  = boot
-C_PIECES += ../gpio
+C_PIECES += ../gpio ../uart
 
 # Define Hardware Platform
 PROCESSOR  = AM335X

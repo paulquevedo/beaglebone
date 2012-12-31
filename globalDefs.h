@@ -24,6 +24,15 @@ typedef unsigned int   bool32_t;
 #define STR(s)  #s
 #define XSTR(s) STR(s)
 
+#define LIMIT_VAL(x,lo,hi) {    \
+    if ((x) < (lo))             \
+         x  = (lo);             \
+    else if ((x) > (hi))        \
+         x  = (hi);             \
+}
+#define LIMIT_HI_VAL(x,hi) { if ((x) > (hi)) { x = (hi); } }
+#define LIMIT_LO_VAL(x,lo) { if ((x) < (lo)) { x = (lo); } }
+
 #ifdef  TRUE
 #undef  TRUE
 #endif
