@@ -15,9 +15,7 @@ ASM_PIECES = start
 # List your c files here (minus the .c):
 
 C_PIECES  = boot
-#C_PIECES += ../gpio ../uart
-
-C_DRIVERS = gpio uart
+C_PIECES += gpio uart
 
 # Define Hardware Platform
 PROCESSOR  = AM335X
@@ -44,7 +42,6 @@ OPT_LEVEL = 0
 
 C_FLAGS = -Wall -c -g -O${OPT_LEVEL} -D${PROCESSOR}
 C_FILES  = ${C_PIECES:%=%.c}
-C_FILES += ${C_DRIVERS:%=../%.c}
 C_O_FILES = ${C_FILES:%.c=%.o}
 
 O_FILES = ${ASM_O_FILES} ${C_O_FILES}
@@ -82,18 +79,16 @@ ${TARGET}.axf: ${O_FILES}
 	${AS} ${ASM_FLAGS} ${CPU_FLAGS} -o $@ $<
 
 %.o: %.c
-	${CC} ${C_FLAGS} -I${INCLUDE} ${CPU_FLAGS} -o $@ $<
+	${CC} ${C_FLAGS} -I${INCLUDE} ${CPU_FLAGS} -o $@ -c $<
 
-../%.o: %.c
-	${CC} ${C_FLAGS} -I${INCLUDE} ${CPU_FLAGS} -o $@ $<
-	@mv $@ ./
+%.o: ../%.c
+	${CC} ${C_FLAGS} -I${INCLUDE} ${CPU_FLAGS} -o $@ -c $<
 
 clean:
 	@echo
 	@echo Cleaning up...
 	@echo
 	rm -f *.o
-	rm -f ../*.o
 	rm -f ${TARGET}.axf
 	rm -f ${TARGET}.out.s
 	rm -f ${TARGET}.bin
