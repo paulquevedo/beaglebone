@@ -627,8 +627,16 @@
 #define UART_LCR_PARITY_TYPE1      BIT_4
 #define UART_LCR_PARITY_EN         BIT_3
 #define UART_LCR_NB_STOP           BIT_2
-#define UART_LCR_CHAR_LENGTH_MASK (BIT_0 | BIT_1)
-#define UART_LCR_CHAR_LENGTH_SHFT  0
+#define UART_LCR_CHAR_LENGTH(val) ((val) & 0x3)
+
+#define UART_LSR_RXFIFOSTS          BIT_7
+#define UART_LSR_TXSRE              BIT_6
+#define UART_LSR_TXFIFOE            BIT_5
+#define UART_LSR_RXBI               BIT_4
+#define UART_LSR_RXFE               BIT_3
+#define UART_LSR_RXPE               BIT_2
+#define UART_LSR_RXOE               BIT_1
+#define UART_LSR_RXFIFOE            BIT_0
 
 #define UART_EFR_AUTOCTSEN          BIT_7
 #define UART_EFR_AUTORTSEN          BIT_6
@@ -652,4 +660,19 @@
 
 #define UART_SCR_RX_TRIG_GRANU1 BIT_7
 #define UART_SCR_TX_TRIG_GRANU1 BIT_6
+
+#define UART_DLL_CLOCK_LSB(val) ((val) & 0xff)
+#define UART_DLH_CLOCK_MSB(val) (((val) >> 8) & 0x3f)
+
+enum {
+    UART_MDR1_MODE_16X = 0,
+    UART_MDR1_MODE_SIR,
+    UART_MDR1_MODE_16X_AUTO_BAUD,
+    UART_MDR1_MODE_13X,
+    UART_MDR1_MODE_MIR,
+    UART_MDR1_MODE_FIR,
+    UART_MDR1_MODE_CIR,
+    UART_MDR1_MODE_DISABLE,
+};
+#define UART_MDR1_MODESELECT(val) ((val) & 0x7)
 #endif

@@ -219,14 +219,21 @@ int main(void)
     clkDDRInit();
     emifInit();
     ddr2Init();
-    uartConfig(UART_0, &uartCfg);
+    uartConfig(UART_CONSOLE, &uartCfg);
 
     gpioConfig(HW_LED0_PORT, HW_LED0_PIN, GPIO_CFG_OUTPUT);
     gpioConfig(HW_LED1_PORT, HW_LED1_PIN, GPIO_CFG_OUTPUT);
 
+    uartPuts("AM355x BeagleBone Bootloader");
+    uartPuts("Executing DDR Test...");
+
     gpioSet(HW_LED1_PORT, HW_LED1_PIN);
-    if (ddrtest() != ERROR)
+    if (ddrtest() != ERROR) {
+        uartPuts("DDR OK");
         gpioClear(HW_LED1_PORT, HW_LED1_PIN);
+    } else {
+        uartPuts("DDR ERROR");
+    }
 
     while (1) {
         gpioToggle(HW_LED0_PORT, HW_LED0_PIN);

@@ -68,7 +68,10 @@ typedef struct {
     } fifo;
 } uartCfg_t;
 
-extern void uartConfig(uint32_t inst, uartCfg_t *cfg);
+extern int  uartConfig(uint32_t inst, uartCfg_t *cfg);
+extern int  uartWrite (uint32_t inst, uint8_t *data, uint32_t len);
+extern int  uartRead  (uint32_t inst, uint8_t *data, uint32_t len);
+extern void uartPuts  (char *str);
 
 /**********************
  * Board Defines
@@ -94,4 +97,5 @@ extern void uartConfig(uint32_t inst, uartCfg_t *cfg);
 #define HW_LED3_PORT GPIO_1
 #define HW_LED3_PIN  24
 
+#define UART_CONSOLE UART_0
 #endif
