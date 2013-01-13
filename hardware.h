@@ -78,23 +78,52 @@ extern void uartPuts  (char *str);
  *********************/
 #define MASTER_OSC 24000000 /* 24MHz crystal */
 
-/* PER PLL
+/* CORE PLL via ADPLL
+ * CLK_M_OSC is 24MHz.
+ * CLKDCOLDO is 2000MHZ
+ * CLK_OUTM4 is 200MHz
+ * CLK_OUTM5 is 250MHz
+ * CLK_OUTM6 is 500MHz
+ *           2 * [M / (N + 1)] * CLK_M_OSC
+ *           defined in s8.1.6.3.1 of am335x TRM */
+#define CORE_CLKDCOLDO 2000000000
+#define CORE_CLKOUTM4  200000000
+#define CORE_CLKOUTM5  250000000
+#define CORE_CLKOUTM6  500000000
+#define CORE_PLL_M  1000
+#define CORE_PLL_N  23
+#define CORE_PLL_M4 10
+#define CORE_PLL_M5 8
+#define CORE_PLL_M6 4
+
+/* PER PLL via ADPLLLJ (Low Jitter)
  * CLK_M_OSC is 24MHz.
  * CLK_OUT   is 960MHZ
  * CLK_OUTM2 is 192MHz
- *           CLK_M_OSC * M / ((N + 1) * M2)
- *           defined in s7.3.3.2 of am335x TRM */
-#define PER_OSC 960000000
+ *           [M / (N + 1)] * CLK_M_OSC * [1/M2]
+ *           defined in s8.1.6.4.1 of am335x TRM */
+#define PER_CLKOUT   960000000
 #define PER_CLKOUTM2 192000000
 #define PER_PLL_M  960
 #define PER_PLL_N  23
 #define PER_PLL_M2 5
 
-/* DDR PLL
+/* MPU (MicroProcessor) PLL via ADPLL
+ * CLK_M_OSC is 24MHz
+ * CLK_OUT   is 720MHz
+ *           [M / (N + 1)] * CLK_M_OSC * [1/M2]
+ *           defined in s8.1.6.3.1 of am335x TRM */
+#define MPU_CLKOUT 720000000
+#define MPU_PLL_M  720
+#define MPU_PLL_N  23
+#define MPU_PLL_M2 1
+
+/* DDR PLL via ADPLL
  * CLK_M_OSC is 24MHz.
- * CLK_OUT   is CLK_M_OSC * M / ((N + 1) * M2)
- *           defined in s7.3.3.2 of am335x TRM */
-#define DDR_OSC 266000000
+ * CLK_OUT   is 266MHz
+ *           [M / (N + 1)] * CLK_M_OSC * [1/M2]
+ *           defined in s8.1.6.3.1 of am335x TRM */
+#define DDR_CLKOUT 266000000
 #define DDR_PLL_M  266
 #define DDR_PLL_N  23
 #define DDR_PLL_M2 1

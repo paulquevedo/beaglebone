@@ -15,6 +15,48 @@ static void delay(uint32_t count)
         ;
 }
 
+static void pllCoreInit(void)
+{
+    /* Core PLL Init as per s8.1.6.7.1 of am335x TRM */
+    /* 1. Switch PLL to bypass mode */
+    volatile uint32_t value;
+    value  = CM_CLKMODE_DPLL_CORE   & ~CM_DPLL_EN_MASK;
+    value |= CM_DPLL_EN_MN_BYP_MODE << CM_DPLL_EN_SHFT;
+    CM_CLKMODE_DPLL_CORE = value;
+
+    /* 2. Wait for PLL bypass */
+    while (!(CM_IDLEST_DPLL_CORE & CM_DPLL_ST_MN_BYPASS))
+        ;
+
+    /* 3. Configure PLL mult and div */
+    value  = CM_CLKSEL_DPLL_CORE & ~(CM_DPLL_MULT_MASK | CM_DPLL_DIV_MASK);
+    value |= CORE_PLL_M << CM_DPLL_MULT_SHFT;
+    value |= CORE_PLL_N << CM_DPLL_DIV_SHFT;
+    CM_CLKSEL_DPLL_CORE = value;
+
+    /* 4. Configure M4,5,6 Divider */
+    value  = CM_DIV_M4_DPLL_CORE & ~CM_DPLL_HSDIVIDER_DIV_MASK;
+    value |= CORE_PLL_M4 << CM_DPLL_HSDIVIDER_DIV_SHFT;
+    CM_DIV_M4_DPLL_CORE  = value;
+
+    value  = CM_DIV_M5_DPLL_CORE & ~CM_DPLL_HSDIVIDER_DIV_MASK;
+    value |= CORE_PLL_M5 << CM_DPLL_HSDIVIDER_DIV_SHFT;
+    CM_DIV_M5_DPLL_CORE  = value;
+
+    value  = CM_DIV_M6_DPLL_CORE & ~CM_DPLL_HSDIVIDER_DIV_MASK;
+    value |= CORE_PLL_M6 << CM_DPLL_HSDIVIDER_DIV_SHFT;
+    CM_DIV_M6_DPLL_CORE  = value;
+
+    /* 5. Switch PLL to lock mode */
+    value  = CM_CLKMODE_DPLL_CORE & ~CM_DPLL_EN_MASK;
+    value |= CM_DPLL_EN_LOCK_MODE << CM_DPLL_EN_SHFT;
+    CM_CLKMODE_DPLL_CORE = value;
+
+    /* 6. Wait for pll to lock */
+    while (!(CM_IDLEST_DPLL_CORE & CM_DPLL_ST_DPLL_CLK))
+        ;
+}
+
 static void pllPerInit(void)
 {
     /* Peripheral PLL Init as per s8.1.6.8.1 of am335x TRM */
@@ -22,6 +64,7 @@ static void pllPerInit(void)
     volatile uint32_t value;
     value  = CM_CLKMODE_DPLL_PER    & ~CM_DPLL_EN_MASK;
     value |= CM_DPLL_EN_MN_BYP_MODE << CM_DPLL_EN_SHFT;
+    CM_CLKMODE_DPLL_PER = value;
 
     /* 2. Wait for PLL bypass */
     while (!(CM_IDLEST_DPLL_PER & CM_DPLL_ST_MN_BYPASS))
@@ -36,6 +79,7 @@ static void pllPerInit(void)
     /* 4. Configure M2 Divider */
     value  = CM_DIV_M2_DPLL_PER & ~CM_DPLL_M2_CLKOUT_DIV_MASK;
     value |= PER_PLL_M2 << CM_DPLL_M2_CLKOUT_DIV_SHFT;
+    CM_DIV_M2_DPLL_PER = value;
 
     /* 5. Switch PLL to lock mode */
     value  = CM_CLKMODE_DPLL_PER  & ~CM_DPLL_EN_MASK;
@@ -44,6 +88,40 @@ static void pllPerInit(void)
 
     /* 6. Wait for pll to lock */
     while (!(CM_IDLEST_DPLL_PER & CM_DPLL_ST_DPLL_CLK))
+        ;
+}
+
+static void pllMpuInit(void)
+{
+    /* MPU (MicroProcessor) PLL Init as per s8.1.6.9.1 of am335x TRM */
+    /* 1. Switch PLL to bypass mode */
+    volatile uint32_t value;
+    value  = CM_CLKMODE_DPLL_MPU    & ~CM_DPLL_EN_MASK;
+    value |= CM_DPLL_EN_MN_BYP_MODE << CM_DPLL_EN_SHFT;
+    CM_CLKMODE_DPLL_MPU = value;
+
+    /* 2. Wait for PLL bypass */
+    while (!(CM_IDLEST_DPLL_MPU & CM_DPLL_ST_MN_BYPASS))
+        ;
+
+    /* 3. Configure PLL mult and div */
+    value  = CM_CLKSEL_DPLL_MPU & ~(CM_DPLL_MULT_MASK | CM_DPLL_DIV_MASK);
+    value |= MPU_PLL_M << CM_DPLL_MULT_SHFT;
+    value |= MPU_PLL_N << CM_DPLL_DIV_SHFT;
+    CM_CLKSEL_DPLL_MPU = value;
+
+    /* 4. Configure M2 Divider */
+    value  = CM_DIV_M2_DPLL_MPU & ~CM_DPLL_M2_CLKOUT_DIV_MASK;
+    value |= MPU_PLL_M2 << CM_DPLL_M2_CLKOUT_DIV_SHFT;
+    CM_DIV_M2_DPLL_MPU = value;
+
+    /* 5. Switch PLL to lock mode */
+    value  = CM_CLKMODE_DPLL_MPU  & ~CM_DPLL_EN_MASK;
+    value |= CM_DPLL_EN_LOCK_MODE << CM_DPLL_EN_SHFT;
+    CM_CLKMODE_DPLL_MPU = value;
+
+    /* 6. Wait for pll to lock */
+    while (!(CM_IDLEST_DPLL_MPU & CM_DPLL_ST_DPLL_CLK))
         ;
 }
 
@@ -248,7 +326,9 @@ int main(void)
     /* Enable control module clock */
     CM_MODULEMODE_ENABLE(CM_WKUP_CONTROL_CLKCTRL);
 
+    pllCoreInit();
     pllPerInit();
+    pllMpuInit();
     pllDDRInit();
     emifInit();
     ddr2Init();

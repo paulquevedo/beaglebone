@@ -238,6 +238,11 @@
 #define CM_DPLL_M2_CLKOUT_DIV_MASK  0x1F
 #define CM_DPLL_M2_CLKOUT_DIV_SHFT  0
 
+/* CM_DIV_Mn_DPLL_CORE Values */
+#define CM_DPLL_HSDIVIDER_DIV_MASK 0x1F
+#define CM_DPLL_HSDIVIDER_DIV_SHFT 0
+
+
 /******************** CONTROL MODULE *****************************************/
 #define CTRLM_BASE_ADDR 0x44E10000
 
