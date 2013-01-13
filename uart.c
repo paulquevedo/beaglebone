@@ -219,11 +219,13 @@ int uartRead(uint32_t inst, uint8_t *data, uint32_t len)
 
 void uartPuts(char *str)
 {
+    char *cr = "\n\r";
     int len;
     for (len = 0; len < 80; len++) {
         if (str[len] == '\0')
             break;
     }
     uartWrite(UART_CONSOLE, (uint8_t *)str, len);
+    uartWrite(UART_CONSOLE, (uint8_t *)cr, 2);
 }
 
