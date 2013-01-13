@@ -78,6 +78,18 @@ extern void uartPuts  (char *str);
  *********************/
 #define MASTER_OSC 24000000 /* 24MHz crystal */
 
+/* PER PLL
+ * CLK_M_OSC is 24MHz.
+ * CLK_OUT   is 960MHZ
+ * CLK_OUTM2 is 192MHz
+ *           CLK_M_OSC * M / ((N + 1) * M2)
+ *           defined in s7.3.3.2 of am335x TRM */
+#define PER_OSC 960000000
+#define PER_CLKOUTM2 192000000
+#define PER_PLL_M  960
+#define PER_PLL_N  23
+#define PER_PLL_M2 5
+
 /* DDR PLL
  * CLK_M_OSC is 24MHz.
  * CLK_OUT   is CLK_M_OSC * M / ((N + 1) * M2)

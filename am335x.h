@@ -675,4 +675,108 @@ enum {
     UART_MDR1_MODE_DISABLE,
 };
 #define UART_MDR1_MODESELECT(val) ((val) & 0x7)
+
+/*********************** MMC/SD MODULE ****************************************/
+#define MMC0_BASE_ADDR 0x48060000
+
+#define SD_SYSCONFIG(base)      HWREG32((base) + 0x110)
+#define SD_SYSSTATUS(base)      HWREG32((base) + 0x114)
+#define SD_CSRE(base)           HWREG32((base) + 0x124)
+#define SD_SYSTEST(base)        HWREG32((base) + 0x128)
+#define SD_CON(base)            HWREG32((base) + 0x12C)
+#define SD_PWCNT(base)          HWREG32((base) + 0x130)
+#define SD_SDMASA(base)         HWREG32((base) + 0x200)
+#define SD_BLK(base)            HWREG32((base) + 0x204)
+#define SD_ARG(base)            HWREG32((base) + 0x208)
+#define SD_CMD(base)            HWREG32((base) + 0x20C)
+#define SD_RSP10(base)          HWREG32((base) + 0x210)
+#define SD_RSP32(base)          HWREG32((base) + 0x214)
+#define SD_RSP54(base)          HWREG32((base) + 0x218)
+#define SD_RSP76(base)          HWREG32((base) + 0x21C)
+#define SD_DATA(base)           HWREG32((base) + 0x220)
+#define SD_PSTATE(base)         HWREG32((base) + 0x224)
+#define SD_HCTL(base)           HWREG32((base) + 0x228)
+#define SD_SYSCTL(base)         HWREG32((base) + 0x22C)
+#define SD_STAT(base)           HWREG32((base) + 0x230)
+#define SD_IE(base)             HWREG32((base) + 0x234)
+#define SD_ISE(base)            HWREG32((base) + 0x238)
+#define SD_AC12(base)           HWREG32((base) + 0x23C)
+#define SD_CAPA(base)           HWREG32((base) + 0x240)
+#define SD_CUR_CAPA(base)       HWREG32((base) + 0x248)
+#define SD_FE(base)             HWREG32((base) + 0x250)
+#define SD_ADMAES(base)         HWREG32((base) + 0x254)
+#define SD_ADMASAL(base)        HWREG32((base) + 0x258)
+#define SD_ADMASAH(base)        HWREG32((base) + 0x25C)
+#define SD_REV(base)            HWREG32((base) + 0x2FC)
+
+#define SD_SYSCONFIG_AUTOIDLE           BIT_0
+#define SD_SYSCONFIG_SOFTRESET          BIT_1
+#define SD_SYSCONFIG_ENAWAKEUP          BIT_2
+#define SD_SYSCONFIG_SIDLEMODE(val)     (((val) & 0x3) <<  3)
+#define SD_SYSCONFIG_CLOCKACTIVITY(val) (((val) & 0x3) <<  8)
+#define SD_SYSCONFIG_STANDBYMODE(val)   (((val) & 0x3) << 12)
+
+#define SD_SYSSTATUS_RESETDONE          BIT_0
+
+#define SD_CON_OD               BIT_0
+#define SD_CON_INIT             BIT_1
+#define SD_CON_HR               BIT_2
+#define SD_CON_STR              BIT_3
+#define SD_CON_MODE             BIT_4
+#define SD_CON_DW8              BIT_5
+#define SD_CON_MIT              BIT_6
+#define SD_CON_CDP              BIT_7
+#define SD_CON_WPP              BIT_8
+#define SD_CON_DVAL(val)        (((val) & 0x3) << 9)
+#define SD_CON_CTPL             BIT_11
+#define SD_CON_CEATA            BIT_12
+#define SD_CON_PADEN            BIT_15
+#define SD_CON_CLKEXTFREE       BIT_16
+#define SD_CON_BOOT_ACK         BIT_17
+#define SD_CON_BOOT_CF0         BIT_18
+#define SD_CON_DDR              BIT_19
+#define SD_CON_DMA_MnS          BIT_20
+#define SD_CON_SDMA_LnE         BIT_21
+
+#define SD_SYSCTL_ICE       BIT_0
+#define SD_SYSCTL_ICS       BIT_1
+#define SD_SYSCTL_CEN       BIT_2
+#define SD_SYSCTL_CLKD(val) (((val) & 0x3ff) <<  6)
+#define SD_SYSCTL_DTO(val)  (((val) & 0x00f) << 16)
+#define SD_SYSCTL_SRA       BIT_24
+#define SD_SYSCTL_SRC       BIT_25
+#define SD_SYSCTL_SRD       BIT_26
+
+#define SD_HCTL_DTW         BIT_1
+#define SD_HCTL_HSPE        BIT_2
+#define SD_HCTL_DMAS(val)  (((val) & 0x3) << 3)
+#define SD_HCTL_CDTL        BIT_6
+#define SD_HCTL_CDSS        BIT_7
+#define SD_HCTL_SDBP        BIT_8
+#define SD_HCTL_SDVS(val)  (((val) & 0x7) << 9)
+#define SD_HCTL_SBGR        BIT_16
+#define SD_HCTL_CR          BIT_17
+#define SD_HCTL_RWC         BIT_18
+#define SD_HCTL_IBG         BIT_19
+#define SD_HCTL_IWE         BIT_24
+#define SD_HCTL_INS         BIT_25
+#define SD_HCTL_REM         BIT_26
+#define SD_HCTL_OBWE        BIT_27
+
+#define SD_BLK_NBLK(val)    (((val) & 0xffff) << 16)
+#define SD_BLK_BLEN(val)    (((val) & 0x0fff) <<  0)
+
+#define SD_CAPA_TCF(base)   ((SD_CAPA(base) >>  0) & 0x3f)
+#define SD_CAPA_TCU         BIT_7
+#define SD_CAPA_BCF(base)   ((SD_CAPA(base) >>  8) & 0x3f)
+#define SD_CAPA_MBL(base)   ((SD_CAPA(base) >> 16) & 0x03)
+#define SD_CAPA_AD2S(base)  BIT_19
+#define SD_CAPA_HSS(base)   BIT_21
+#define SD_CAPA_DS(base)    BIT_22
+#define SD_CAPA_SRS(base)   BIT_23
+#define SD_CAPA_VS33(base)  BIT_24
+#define SD_CAPA_VS30(base)  BIT_25
+#define SD_CAPA_VS18(base)  BIT_26
+#define SD_CAPA_64BIT(base) BIT_28
+
 #endif

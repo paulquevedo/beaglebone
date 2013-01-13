@@ -15,7 +15,39 @@ static void delay(uint32_t count)
         ;
 }
 
-static void clkDDRInit(void)
+static void pllPerInit(void)
+{
+    /* Peripheral PLL Init as per s8.1.6.8.1 of am335x TRM */
+    /* 1. Switch PLL to bypass mode */
+    volatile uint32_t value;
+    value  = CM_CLKMODE_DPLL_PER    & ~CM_DPLL_EN_MASK;
+    value |= CM_DPLL_EN_MN_BYP_MODE << CM_DPLL_EN_SHFT;
+
+    /* 2. Wait for PLL bypass */
+    while (!(CM_IDLEST_DPLL_PER & CM_DPLL_ST_MN_BYPASS))
+        ;
+
+    /* 3. Configure PLL mult and div */
+    value  = CM_CLKSEL_DPLL_PERIPH & ~(CM_DPLL_MULT_MASK | CM_DPLL_DIV_MASK);
+    value |= PER_PLL_M << CM_DPLL_MULT_SHFT;
+    value |= PER_PLL_N << CM_DPLL_DIV_SHFT;
+    CM_CLKSEL_DPLL_PERIPH = value;
+
+    /* 4. Configure M2 Divider */
+    value  = CM_DIV_M2_DPLL_PER & ~CM_DPLL_M2_CLKOUT_DIV_MASK;
+    value |= PER_PLL_M2 << CM_DPLL_M2_CLKOUT_DIV_SHFT;
+
+    /* 5. Switch PLL to lock mode */
+    value  = CM_CLKMODE_DPLL_PER  & ~CM_DPLL_EN_MASK;
+    value |= CM_DPLL_EN_LOCK_MODE << CM_DPLL_EN_SHFT;
+    CM_CLKMODE_DPLL_PER = value;
+
+    /* 6. Wait for pll to lock */
+    while (!(CM_IDLEST_DPLL_PER & CM_DPLL_ST_DPLL_CLK))
+        ;
+}
+
+static void pllDDRInit(void)
 {
     /* DDR PLL Init as per s8.1.6.11.1 of the am335x TRM */
     /* 1. Switch PLL to bypass mode */
@@ -216,7 +248,8 @@ int main(void)
     /* Enable control module clock */
     CM_MODULEMODE_ENABLE(CM_WKUP_CONTROL_CLKCTRL);
 
-    clkDDRInit();
+    pllPerInit();
+    pllDDRInit();
     emifInit();
     ddr2Init();
     uartConfig(UART_CONSOLE, &uartCfg);
