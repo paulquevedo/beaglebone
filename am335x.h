@@ -775,13 +775,36 @@ enum {
 #define SD_CAPA_TCU         BIT_7
 #define SD_CAPA_BCF(base)   ((SD_CAPA(base) >>  8) & 0x3f)
 #define SD_CAPA_MBL(base)   ((SD_CAPA(base) >> 16) & 0x03)
-#define SD_CAPA_AD2S(base)  BIT_19
-#define SD_CAPA_HSS(base)   BIT_21
-#define SD_CAPA_DS(base)    BIT_22
-#define SD_CAPA_SRS(base)   BIT_23
-#define SD_CAPA_VS33(base)  BIT_24
-#define SD_CAPA_VS30(base)  BIT_25
-#define SD_CAPA_VS18(base)  BIT_26
-#define SD_CAPA_64BIT(base) BIT_28
+#define SD_CAPA_AD2S        BIT_19
+#define SD_CAPA_HSS         BIT_21
+#define SD_CAPA_DS          BIT_22
+#define SD_CAPA_SRS         BIT_23
+#define SD_CAPA_VS33        BIT_24
+#define SD_CAPA_VS30        BIT_25
+#define SD_CAPA_VS18        BIT_26
+#define SD_CAPA_64BIT       BIT_28
 
+#define SD_STAT_BADA        BIT_29
+#define SD_STAT_CERR        BIT_28
+#define SD_STAT_ADMAE       BIT_25
+#define SD_STAT_ACE         BIT_24
+#define SD_STAT_DEB         BIT_22
+#define SD_STAT_DCRC        BIT_21
+#define SD_STAT_DTO         BIT_20
+#define SD_STAT_CIE         BIT_19
+#define SD_STAT_CEB         BIT_18
+#define SD_STAT_CCRC        BIT_17
+#define SD_STAT_CTO         BIT_16
+#define SD_STAT_ERRI        BIT_15
+#define SD_STAT_BSR         BIT_10
+#define SD_STAT_OBI         BIT_9
+#define SD_STAT_CIRQ        BIT_8
+#define SD_STAT_CREM        BIT_7
+#define SD_STAT_CINS        BIT_6
+#define SD_STAT_BRR         BIT_5
+#define SD_STAT_BWR         BIT_4
+#define SD_STAT_DMA         BIT_3
+#define SD_STAT_BGE         BIT_2
+#define SD_STAT_TC          BIT_1
+#define SD_STAT_CC          BIT_0
 #endif

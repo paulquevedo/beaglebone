@@ -5,6 +5,8 @@
  *
  * Paul Quevedo 2012
  *****************************************************************************/
+#include <stdio.h>
+
 #include "globalDefs.h"
 #include "am335x.h"
 #include "hardware.h"
@@ -347,6 +349,8 @@ int main(void)
     } else {
         uartPuts("DDR ERROR");
     }
+
+    mmcsdInit(MMCSD_0);
 
     while (1) {
         gpioToggle(HW_LED0_PORT, HW_LED0_PIN);

@@ -73,6 +73,12 @@ extern int  uartWrite (uint32_t inst, uint8_t *data, uint32_t len);
 extern int  uartRead  (uint32_t inst, uint8_t *data, uint32_t len);
 extern void uartPuts  (char *str);
 
+enum {
+    MMCSD_0,
+    MMCSD_1,
+    MMCSD_2,
+};
+extern int mmcsdInit(uint32_t inst);
 /**********************
  * Board Defines
  *********************/

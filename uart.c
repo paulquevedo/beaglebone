@@ -190,31 +190,41 @@ int uartConfig(uint32_t inst, uartCfg_t *cfg)
 int uartWrite(uint32_t inst, uint8_t *data, uint32_t len)
 {
     uint32_t base = inst2Base[inst];
+    uint32_t txLen;
 
-    while (len--) {
+    for (txLen = 0; txLen < len; txLen++) {
+        uint32_t retry = 100;
         /* Wait for TXFIFO to be empty */
-        while (!(UART_LSR(base) & UART_LSR_TXSRE))
+        while (!(UART_LSR(base) & UART_LSR_TXSRE) && retry--)
             ;
 
-        UART_THR(base) = *data++;
+        if (retry)
+            UART_THR(base) = *data++;
+        else
+            break;
     }
 
-    return OK;
+    return txLen;
 }
 
 int uartRead(uint32_t inst, uint8_t *data, uint32_t len)
 {
     uint32_t base = inst2Base[inst];
+    uint32_t rxLen;
 
-    while (len--) {
+    for (rxLen = 0; rxLen < len; rxLen++) {
+        uint32_t retry = 100;
         /* Wait for RXFIFO to have data */
-        while (!(UART_LSR(base) & UART_LSR_RXFIFOE))
+        while (!(UART_LSR(base) & UART_LSR_RXFIFOE) && retry--)
             ;
 
-        *data++ = UART_RHR(base);
+        if (retry)
+            *data++ = UART_RHR(base);
+        else
+            break;
     }
 
-    return OK;
+    return rxLen;
 }
 
 void uartPuts(char *str)
