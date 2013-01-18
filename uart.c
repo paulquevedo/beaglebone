@@ -9,6 +9,8 @@
 #include "am335x.h"
 #include "hardware.h"
 
+#define CLK_INPUT_FREQ (PER_CLKOUTM2 / 4)
+
 static const uint32_t inst2Base[] = {
     [UART_0] = UART0_BASE_ADDR,
     [UART_1] = UART1_BASE_ADDR,
@@ -18,7 +20,7 @@ static const uint32_t inst2Base[] = {
     [UART_5] = UART5_BASE_ADDR,
 };
 
-/* Divided from 48MHz input clock */
+/* Divided from 48MHz CLK_INPUT_FREQ */
 static const uint16_t baud2Div[] = {
     [BAUD_300]    = 10000,
     [BAUD_600]    = 5000,

@@ -12,6 +12,83 @@
 #define __HARDWARE_H__
 
 /**********************
+ * Clock Frequencies
+ *********************/
+#define MASTER_OSC 24000000 /* 24MHz crystal */
+
+/* All clocks are generated from the master ocsillator.
+ * All peripherls/modules run off one of the following clock
+ * outputs. There may be an additioanl fixed divider into
+ * a perpheral/module */
+
+/* CORE PLL via ADPLL
+ * CLK_M_OSC is 24MHz.
+ * CLKDCOLDO is 2000MHZ
+ * CLK_OUTM4 is 200MHz
+ * CLK_OUTM5 is 250MHz
+ * CLK_OUTM6 is 500MHz
+ *           2 * [M / (N + 1)] * CLK_M_OSC
+ *           defined in s8.1.6.3.1 of am335x TRM */
+#define CORE_CLKDCOLDO 2000000000
+#define CORE_CLKOUTM4  200000000
+#define CORE_CLKOUTM5  250000000
+#define CORE_CLKOUTM6  500000000
+#define CORE_PLL_M  1000
+#define CORE_PLL_N  23
+#define CORE_PLL_M4 10
+#define CORE_PLL_M5 8
+#define CORE_PLL_M6 4
+
+/* PER PLL via ADPLLLJ (Low Jitter)
+ * CLK_M_OSC is 24MHz.
+ * CLK_OUT   is 960MHZ
+ * CLK_OUTM2 is 192MHz
+ *           [M / (N + 1)] * CLK_M_OSC * [1/M2]
+ *           defined in s8.1.6.4.1 of am335x TRM */
+#define PER_CLKOUT   960000000
+#define PER_CLKOUTM2 192000000
+#define PER_PLL_M  960
+#define PER_PLL_N  23
+#define PER_PLL_M2 5
+
+/* MPU (MicroProcessor) PLL via ADPLL
+ * CLK_M_OSC is 24MHz
+ * CLK_OUT   is 720MHz
+ *           [M / (N + 1)] * CLK_M_OSC * [1/M2]
+ *           defined in s8.1.6.3.1 of am335x TRM */
+#define MPU_CLKOUT 720000000
+#define MPU_PLL_M  720
+#define MPU_PLL_N  23
+#define MPU_PLL_M2 1
+
+/* DDR PLL via ADPLL
+ * CLK_M_OSC is 24MHz.
+ * CLK_OUT   is 266MHz
+ *           [M / (N + 1)] * CLK_M_OSC * [1/M2]
+ *           defined in s8.1.6.3.1 of am335x TRM */
+#define DDR_CLKOUT 266000000
+#define DDR_PLL_M  266
+#define DDR_PLL_N  23
+#define DDR_PLL_M2 1
+
+
+/**********************
+ * Board Defines
+ *********************/
+/* User LEDs */
+#define HW_LED0_PORT GPIO_1
+#define HW_LED0_PIN  21
+#define HW_LED1_PORT GPIO_1
+#define HW_LED1_PIN  22
+#define HW_LED2_PORT GPIO_1
+#define HW_LED2_PIN  23
+#define HW_LED3_PORT GPIO_1
+#define HW_LED3_PIN  24
+
+/* System Console */
+#define UART_CONSOLE UART_0
+
+/**********************
  * GPIO
  *********************/
 enum {
@@ -79,70 +156,4 @@ enum {
     MMCSD_2,
 };
 extern int mmcsdInit(uint32_t inst);
-/**********************
- * Board Defines
- *********************/
-#define MASTER_OSC 24000000 /* 24MHz crystal */
-
-/* CORE PLL via ADPLL
- * CLK_M_OSC is 24MHz.
- * CLKDCOLDO is 2000MHZ
- * CLK_OUTM4 is 200MHz
- * CLK_OUTM5 is 250MHz
- * CLK_OUTM6 is 500MHz
- *           2 * [M / (N + 1)] * CLK_M_OSC
- *           defined in s8.1.6.3.1 of am335x TRM */
-#define CORE_CLKDCOLDO 2000000000
-#define CORE_CLKOUTM4  200000000
-#define CORE_CLKOUTM5  250000000
-#define CORE_CLKOUTM6  500000000
-#define CORE_PLL_M  1000
-#define CORE_PLL_N  23
-#define CORE_PLL_M4 10
-#define CORE_PLL_M5 8
-#define CORE_PLL_M6 4
-
-/* PER PLL via ADPLLLJ (Low Jitter)
- * CLK_M_OSC is 24MHz.
- * CLK_OUT   is 960MHZ
- * CLK_OUTM2 is 192MHz
- *           [M / (N + 1)] * CLK_M_OSC * [1/M2]
- *           defined in s8.1.6.4.1 of am335x TRM */
-#define PER_CLKOUT   960000000
-#define PER_CLKOUTM2 192000000
-#define PER_PLL_M  960
-#define PER_PLL_N  23
-#define PER_PLL_M2 5
-
-/* MPU (MicroProcessor) PLL via ADPLL
- * CLK_M_OSC is 24MHz
- * CLK_OUT   is 720MHz
- *           [M / (N + 1)] * CLK_M_OSC * [1/M2]
- *           defined in s8.1.6.3.1 of am335x TRM */
-#define MPU_CLKOUT 720000000
-#define MPU_PLL_M  720
-#define MPU_PLL_N  23
-#define MPU_PLL_M2 1
-
-/* DDR PLL via ADPLL
- * CLK_M_OSC is 24MHz.
- * CLK_OUT   is 266MHz
- *           [M / (N + 1)] * CLK_M_OSC * [1/M2]
- *           defined in s8.1.6.3.1 of am335x TRM */
-#define DDR_CLKOUT 266000000
-#define DDR_PLL_M  266
-#define DDR_PLL_N  23
-#define DDR_PLL_M2 1
-
-/* User LEDs */
-#define HW_LED0_PORT GPIO_1
-#define HW_LED0_PIN  21
-#define HW_LED1_PORT GPIO_1
-#define HW_LED1_PIN  22
-#define HW_LED2_PORT GPIO_1
-#define HW_LED2_PIN  23
-#define HW_LED3_PORT GPIO_1
-#define HW_LED3_PIN  24
-
-#define UART_CONSOLE UART_0
 #endif

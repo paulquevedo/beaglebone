@@ -9,6 +9,9 @@
 #include "am335x.h"
 #include "hardware.h"
 
+#define CLK_INPUT_FREQ          (CORE_CLKOUTM4 / 2)
+#define CLK_DEBOUNCE_INPUT_FREQ (PER_CLKOUTM2 / 5859.375)
+
 static uint32_t inst2Base[] = {
     [GPIO_0] = GPIO0_BASE_ADDR,
     [GPIO_1] = GPIO1_BASE_ADDR,
