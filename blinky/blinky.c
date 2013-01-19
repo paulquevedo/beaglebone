@@ -7,8 +7,8 @@
  * Copyright Paul Quevedo 2012
  *
  *****************************************************************************/
-#include "../globalDefs.h"
-#include "../am335x.h"
+#include "globalDefs.h"
+#include "am335x.h"
 
 /* USER_LED0 defined in section 6.7.3 of the beaglebone SRM */
 #define USER_LED_PORT GPIO1_BASE_ADDR
@@ -55,7 +55,7 @@ int main(void)
     /* Enable Debounce Functional Clk */
     CM_PER_GPIO1_CLKCTRL |= BIT_18;
     /* Wait for gpio clock activity */
-    while(!(CM_PER_L4LS_CLKSTCTRL & CLKACTIVITY_GPIO_1_GDBCLK))
+    while(!(CM_PER_L4LS_CLKSTCTRL & CM_CLKACTIVITY_GPIO_1_GDBCLK))
         ;
 
     /* Set pin mux to GPIO. Modes are defined in s2.2 of am335x datasheet */

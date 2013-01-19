@@ -14,12 +14,12 @@ ASM_PIECES = start
 
 # List your c files here (minus the .c):
 
-C_PIECES = blinky
+C_PIECES  = blinky
 
 # Define Hardware Platform
 PROCESSOR  = AM335X
-BOOT_MODE  = MMCSD
 START_ADDR = 0x402F0400 #Must match linkerscript origin addr
+BOOT_MODE  = MMCSD
 
 SOURCERY = /opt/CodeSourcery/Sourcery_CodeBench_Lite_for_ARM_EABI
 STARTERWARE = ../../StarterWare
@@ -31,7 +31,6 @@ GDB = arm-none-eabi-gdb
 SIZE = arm-none-eabi-size
 OBJDUMP = arm-none-eabi-objdump
 OBJCOPY = arm-none-eabi-objcopy
-# Required for boot stage code. Prefixes binary with code addr/size */
 TI_IMAGE = ${STARTERWARE}/tools/ti_image/tiimage
 
 ASM_FLAGS = -g
@@ -41,12 +40,13 @@ ASM_O_FILES = ${ASM_FILES:%.s=%.o}
 OPT_LEVEL = 0
 
 C_FLAGS = -Wall -c -g -O${OPT_LEVEL} -D${PROCESSOR}
-C_FILES = ${C_PIECES:%=%.c}
+C_FILES  = ${C_PIECES:%=%.c}
 C_O_FILES = ${C_FILES:%.c=%.o}
 
 O_FILES = ${ASM_O_FILES} ${C_O_FILES}
 
 CPU_FLAGS = -mcpu=cortex-a8 -mlong-calls -mthumb-interwork -ffunction-sections
+INCLUDE   = ../
 
 LD_SCRIPT = linkerscript.ld
 
@@ -78,7 +78,10 @@ ${TARGET}.axf: ${O_FILES}
 	${AS} ${ASM_FLAGS} ${CPU_FLAGS} -o $@ $<
 
 %.o: %.c
-	${CC} ${C_FLAGS} ${CPU_FLAGS} -o $@ $<
+	${CC} ${C_FLAGS} -I${INCLUDE} ${CPU_FLAGS} -o $@ -c $<
+
+%.o: ../%.c
+	${CC} ${C_FLAGS} -I${INCLUDE} ${CPU_FLAGS} -o $@ -c $<
 
 clean:
 	@echo
