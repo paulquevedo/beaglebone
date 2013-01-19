@@ -1,0 +1,129 @@
+Fedora 17, gcc 4.7.2
+Beaglebone Rev. A5
+
+#[libFTDI]
+sudo yum install libftdi
+sudo yum install libftdi-devel.i686
+
+#[D2XX Driver]
+NOTE: Could not for the life of me get this to work with D2XX drivers
+      Left here for reference
+http://www.ftdichip.com/Drivers/D2XX.htm
+extract to ftdi_drivers
+cd build/i386
+as root:
+    cp lib* /usr/local/lib
+    chmod 0755 /usr/local/lib/libftd2xx.so.1.1.<version>
+    ln -sf /usr/local/lib/libftd2xx.so.1.1.<version> /usr/local/lib/libftd2xx.so
+
+Connect Beaglebone
+lsusb and this should show up
+    0403:6010 Future Technology Devices International,
+              Ltd FT2232C Dual USB-UART/FIFO IC
+
+#[Install openOCD]
+http://elinux.org/BeagleBoardOpenOCD
+git clone git://openocd.git.sourceforge.net/gitroot/openocd/openocd .
+as root:
+    ./bootstrap
+    #For libFTDI
+    ./configure --enable-osbdm --enable-maintainer-mode
+                --enable-ft2232_libftdi
+                --disable-werror
+    ./make
+    ./make install
+    #For D2XX
+    edit "configure", add -lpthread to the FTD2XX_LIB variable
+    ./configure --enable-osbdm --enable-maintainer-mode
+                --enable-ft2232_ftd2xx
+                --with-ftd2xx-linux-tardir=<path_to>/libftd2xx.so
+                --disable-werror
+
+Link it to bin
+    cd /bin
+    sudo ln -s /usr/local/bin/openocd .
+
+#[Run it]
+
+[pquevedo-lt board]$ sudo openocd -f board/ti_beaglebone.cfg
+[sudo] password for pquevedo:
+Open On-Chip Debugger 0.7.0-dev-00079-g08ddb19 (2012-12-17-19:19)
+Licensed under GNU GPL v2
+For bug reports, read
+        http://openocd.sourceforge.net/doc/doxygen/bugs.html
+        Info : only one transport option; autoselect 'jtag'
+        adapter speed: 16000 kHz
+        trst_and_srst separate srst_gates_jtag trst_push_pull srst_open_drain
+        Info : max TCK change to: 30000 kHz
+        Info : clock speed 15000 kHz
+        Info : JTAG tap: am335x.jrc tap/device found: 0x0b94402f (mfg: 0x017,
+        part: 0xb944, ver: 0x0)
+        Info : JTAG tap: am335x.dap enabled
+        Info : am335x.cpu: hardware has 6 breakpoints, 2 watchpoints
+
+In a seperate konsole
+
+[pquevedo-lt ~]$ telnet localhost 4444
+Trying 127.0.0.1...
+Connected to localhost.
+Escape character is '^]'.
+Open On-Chip Debugger
+>
+
+ensure the vid_pid in /usr/local/share/openocd/scripts/board/ti_beaglebone.cfg
+matches the one listed for lsusb (0403:6010)
+
+i.e. ft2232_vid_pid 0x0403 0x6010
+
+#Reference pages:
+http://elinux.org/BeagleBoardOpenOCD
+http://elinux.org/Running_OpenOCD_on_Linux_with_the_Beaglebone
+
+Use the "screen" program to talk with the board. Beaglebone comes with
+Angstrom linux installed.
+    screen /dev/ttyUSB1 115200
+login as root
+to exit screen ctrl+a to access command mode then type :quit
+to temporarily detach ctrl+a :detach, to reattach screen -r
+
+#[StarterWare Booting]
+http://processors.wiki.ti.com/index.php/AM335X_StarterWare_Booting_And_Flashing
+
+Used the SD card that came with beaglebone. Need a bootable FAT partition
+    which can be done with fdisk or gparted. SDCard came with 70Mb FAT16
+    partition so I didn't toy with it.
+Boot ROM looks for MLO file as initial boot code.
+Build StarterWare/build/armv7a/gcc/am335x/beaglebone/bootloader
+    may need to either export LIB_PATH to point to codesourcery install dir
+    or edit StarterWare/build/armv7a/gcc/makedefs and set it explicitly
+A small header is attached to the beginning of the binary file by makefile
+    in order for boot ROM to recognize it. tools/ti_image directory.
+Copy the binary file boot_ti.bin from
+    StarterWare/binary/armv7a/gcc/am335x/beaglebone/bootloader/Debug
+    to the FAT parition of the SD card. Rename it to MLO
+Repeat for the gpio demo. Move gpioLedBlink_ti.bin to SD card. Rename it app
+Pop the SD card into the beaglebone and if blink works your done.
+    I had issues getting this to work originally. Always seemed to freeze
+    up during the image copy. Open the file "bl_hsmmcsd.c" in
+    StarterWare/bootloader/src. In function HSMMCSDImageCopy() comment out all
+    the string manipulation crap pertaining to g_cCwdBuf and g_cTmpBuf
+    (seriously TI, wtf?). Replace it with
+        strcpy(g_cCwdBuf, "/");
+        strcpy(g_cTmpBuf, "/app");
+    Rebuild and it should work now
+
+#[GDB into blinky]
+From StarterWare/build/armv7a/gcc/am335x/beaglebone/gpio/Debug
+    arm-none-eabi-gdb gpioLedBlink.out
+    tar rem localhost:3333
+    mon reset init
+    layout split
+    list gpioLEDBlink.c:1
+    cont
+    <wait for blinky to run>
+    ctrl+c
+    b bpioLEDBlink.c:Delay
+    cont
+Breakpoints don't work if installed then mon reset init called afterwards
+    Probably something to do with the ddr not being up until after the loader
+    runs
