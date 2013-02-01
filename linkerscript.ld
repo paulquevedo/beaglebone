@@ -8,11 +8,11 @@
 
 MEMORY
 {
-    SRAM  (rwx) : ORIGIN = 0x402F0400, LENGTH = 108K
-    STACK (rwx) : ORIGIN = 0x402FFC00, LENGTH = 1K
+    SRAM  (rwx) : ORIGIN = 0x80000000, LENGTH = 1M
+    STACK (rwx) : ORIGIN = 0x80100000, LENGTH = 8K
 }
 
-IRQ_STACK_SIZE = 0x100;
+IRQ_STACK_SIZE = 0x400;
 FIQ_STACK_SIZE = 0x8;
 UND_STACK_SIZE = 0x8;
 ABT_STACK_SIZE = 0x8;
@@ -22,9 +22,9 @@ SECTIONS
 {
     .entry :
     {
-        _vector_start_addr = .;
-        KEEP(*(.vector_table))
-        KEEP(*(.default_handlers))
+        _exception_table_addr = .;
+        KEEP(*(.exception_table))
+        KEEP(*(.exception_handlers))
     } > SRAM
 
     .text :

@@ -20,6 +20,8 @@ static const uint32_t inst2Base[] = {
     [UART_5] = UART5_BASE_ADDR,
 };
 
+static bool32_t uartInitialized[MAX_UARTS];
+
 /* Divided from 48MHz CLK_INPUT_FREQ */
 static const uint16_t baud2Div[] = {
     [BAUD_300]    = 10000,
@@ -186,6 +188,8 @@ int uartConfig(uint32_t inst, uartCfg_t *cfg)
     uartFifoConfig(base, cfg);
     uartBaudConfig(base, cfg);
 
+    uartInitialized[inst] = TRUE;
+
     return OK;
 }
 
@@ -194,8 +198,11 @@ int uartWrite(uint32_t inst, uint8_t *data, uint32_t len)
     uint32_t base = inst2Base[inst];
     uint32_t txLen;
 
+    if (!uartInitialized[inst])
+        return 0;
+
     for (txLen = 0; txLen < len; txLen++) {
-        uint32_t retry = 100;
+        uint32_t retry = 1000;
         /* Wait for TXFIFO to be empty */
         while (!(UART_LSR(base) & UART_LSR_TXSRE) && retry--)
             ;
@@ -213,6 +220,9 @@ int uartRead(uint32_t inst, uint8_t *data, uint32_t len)
 {
     uint32_t base = inst2Base[inst];
     uint32_t rxLen;
+
+    if (!uartInitialized[inst])
+        return 0;
 
     for (rxLen = 0; rxLen < len; rxLen++) {
         uint32_t retry = 100;
@@ -233,6 +243,10 @@ void uartPuts(char *str)
 {
     char *cr = "\n\r";
     int len;
+
+    if (!uartInitialized[UART_CONSOLE])
+        return;
+
     for (len = 0; len < 80; len++) {
         if (str[len] == '\0')
             break;

@@ -6,7 +6,7 @@
 
 # Name of project/output file:
 
-TARGET = boot
+TARGET = app
 
 # List your asm files here (minus the .s):
 
@@ -14,18 +14,18 @@ ASM_PIECES = start
 
 # List your c files here (minus the .c):
 
-C_PIECES  = boot
+C_PIECES  = hardware
 C_PIECES += gpio uart syscalls
 C_PIECES += sdhc ff diskio
 
 # Define Hardware Platform
 PROCESSOR  = AM335X
-START_ADDR = 0x402F0400 #Must match linkerscript origin addr
+START_ADDR = 0x80000000 #Must match linkerscript origin addr
 BOOT_MODE  = MMCSD
 
 SOURCERY = /opt/CodeSourcery/Sourcery_CodeBench_Lite_for_ARM_EABI
-STARTERWARE = ../../StarterWare
-FATFS = ../fatfs
+STARTERWARE = ../StarterWare
+FATFS = fatfs
 PATH :=/opt/CodeSourcery/Sourcery_CodeBench_Lite_for_ARM_EABI/bin:${PATH}
 CC = arm-none-eabi-gcc
 AS = arm-none-eabi-as
@@ -54,8 +54,7 @@ C_O_FILES = ${C_FILES:%.c=%.o}
 O_FILES = ${ASM_O_FILES} ${C_O_FILES}
 
 CPU_FLAGS = -mcpu=cortex-a8 -mlong-calls -mthumb-interwork -ffunction-sections
-INCLUDE   = -I../
-INCLUDE  += -I${FATFS}/
+INCLUDE   = -I${FATFS}/ -I.
 
 LD_SCRIPT = linkerscript.ld
 
@@ -68,7 +67,7 @@ LIBS += ${SOURCERY}/lib/gcc/arm-none-eabi/4.7.2/libgcc.a
 all: ${TARGET}.axf
 	@${OBJDUMP} -DS ${TARGET}.axf >| ${TARGET}.out.s
 	@${OBJCOPY} -Obinary ${TARGET}.axf ${TARGET}.bin
-	@${TI_IMAGE} ${START_ADDR} ${BOOT_MODE} ${TARGET}.bin MLO
+	@${TI_IMAGE} ${START_ADDR} ${BOOT_MODE} ${TARGET}.bin app
 	@ln -fs ${TARGET}.axf out.axf
 	@echo
 	@echo Executable: ${TARGET}.axf, sym-linked to out.axf
@@ -89,9 +88,6 @@ ${TARGET}.axf: ${O_FILES}
 %.o: %.c
 	${CC} ${C_FLAGS} ${INCLUDE} ${CPU_FLAGS} -o $@ -c $<
 
-%.o: ../%.c
-	${CC} ${C_FLAGS} ${INCLUDE} ${CPU_FLAGS} -o $@ -c $<
-
 %.o: ${FATFS}/%.c
 	${CC} ${C_FLAGS} ${INCLUDE} ${CPU_FLAGS} -o $@ -c $<
 
@@ -105,7 +101,7 @@ clean:
 	rm -f ${TARGET}.bin
 	rm -f ${TARGET}.map
 	rm -f out.axf
-	rm -f MLO
+	rm -f app
 
 openocd:
 	@echo

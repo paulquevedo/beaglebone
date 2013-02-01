@@ -1,5 +1,8 @@
 /*******************************************************************************
 * syscalls.c
+*
+* Refer to http://neptune.billgatliff.com/newlib.html as a reference on
+* porting newlib
 *******************************************************************************/
 #include <sys/stat.h>
 #include "globalDefs.h"
@@ -7,8 +10,20 @@
 
 void *_sbrk_r(void *reent, int size)
 {
-    return (void *) -1;
+    extern char _heap_start;  /* from linkerscript */
+    extern char _heap_end;
+    static char *brk = &_heap_start;
+    char *prevBrk;
+
+    prevBrk = brk;
+    if ((brk + size) > (char *) &_heap_end) {
+        uartPuts("Heap Overflow");
+        return (void *) -1;  /* out of memory */
+    }
+    brk += size;
+    return (void *) prevBrk;
 }
+
 
 int _fstat_r(void *reent, int fd, struct stat *st)
 {

@@ -11,6 +11,9 @@
 #ifndef __HARDWARE_H__
 #define __HARDWARE_H__
 
+#define swap32(x) \
+    asm volatile ("rev %[out], %[in]" : [out] "=r" (x) : [in] "r" (x))
+
 /**********************
  * Clock Frequencies
  *********************/
@@ -77,16 +80,40 @@
  *********************/
 /* User LEDs */
 #define HW_LED0_PORT GPIO_1
-#define HW_LED0_PIN  21
+#define HW_LED0_PIN  24
 #define HW_LED1_PORT GPIO_1
-#define HW_LED1_PIN  22
+#define HW_LED1_PIN  21
 #define HW_LED2_PORT GPIO_1
-#define HW_LED2_PIN  23
+#define HW_LED2_PIN  22
 #define HW_LED3_PORT GPIO_1
-#define HW_LED3_PIN  24
+#define HW_LED3_PIN  23
 
 /* System Console */
 #define UART_CONSOLE UART_0
+
+/**********************
+ * System Tick
+ * Temporary until RTOS
+ *********************/
+extern uint32_t tickGet(void);
+extern void tickDelay(uint32_t numTicks);
+
+/**********************
+ * Interrupts
+ *********************/
+#define intEnable()  { asm volatile ("cpsie i"); }
+#define intDisable() { asm volatile ("cpsid i"); }
+
+enum {
+    INT_PRIORITY_MAX     = 1,
+    INT_PRIORITY_HIGH    = 0x0F,
+    INT_PRIORITY_DEFAULT = 0x1F,
+    INT_PRIORITY_LOW     = 0x2F,
+    INT_PRIORITY_MIN     = 0x3F,
+};
+
+extern void hwClearIRQ  (uint32_t irqNum);
+extern void hwInstallIRQ(uint32_t irqNum, void (*isrPtr)(void), int priority);
 
 /**********************
  * GPIO
@@ -118,6 +145,8 @@ enum {
     UART_3,
     UART_4,
     UART_5,
+
+    MAX_UARTS,
 };
 
 enum {
@@ -149,11 +178,4 @@ extern int  uartConfig(uint32_t inst, uartCfg_t *cfg);
 extern int  uartWrite (uint32_t inst, uint8_t *data, uint32_t len);
 extern int  uartRead  (uint32_t inst, uint8_t *data, uint32_t len);
 extern void uartPuts  (char *str);
-
-enum {
-    MMCSD_0,
-    MMCSD_1,
-    MMCSD_2,
-};
-extern int mmcsdInit(uint32_t inst);
 #endif

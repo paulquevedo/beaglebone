@@ -6,10 +6,12 @@
  * Paul Quevedo 2012
  *****************************************************************************/
 #include <stdio.h>
+#include <string.h>
 
 #include "globalDefs.h"
 #include "am335x.h"
 #include "hardware.h"
+#include "ff.h"
 
 static void delay(uint32_t count)
 {
@@ -293,6 +295,62 @@ static int ddrtest(void)
 }
 
 
+#define BAD_ADDRESS 0xffffffff
+static uint32_t imageCopy(void)
+{
+    FATFS fatfs;
+    FIL fp;
+    UINT bytesRead;
+    FRESULT result;
+    uint32_t imageSize;
+    uint32_t loadAddr;
+    uint32_t *dstPtr;
+    static uint32_t buffer[512];
+
+    memset(&fatfs, 0, sizeof(fatfs));
+    memset(&fp, 0, sizeof(fp));
+
+    result = f_mount(0, &fatfs);
+    if (result != FR_OK) {
+        uartPuts("Failed to mount drive");
+        return BAD_ADDRESS;
+    }
+
+    result = f_open(&fp, "/app", FA_READ);
+    if (result != FR_OK) {
+        uartPuts("Failed to open application file");
+        return BAD_ADDRESS;
+    }
+
+    if (f_read(&fp, &imageSize, 4, &bytesRead) != FR_OK || bytesRead != 4) {
+        uartPuts("Failed to Read application File");
+        return BAD_ADDRESS;
+    }
+
+    if (f_read(&fp, &loadAddr, 4, &bytesRead) != FR_OK || bytesRead != 4) {
+        uartPuts("Failed to Read application File");
+        return BAD_ADDRESS;
+    }
+
+    imageSize -= 8; /* Remove header info */
+    iprintf("Loading to addr %08x size %x\n\r", loadAddr, imageSize);
+    dstPtr = (uint32_t *)loadAddr;
+
+    while (imageSize) {
+        uint32_t chunk = (imageSize > 512) ? 512 : imageSize;
+        if (f_read(&fp, buffer, chunk, &bytesRead) != FR_OK
+                                     || bytesRead  != chunk) {
+            uartPuts("Failed to read a chunk");
+            return BAD_ADDRESS;
+        }
+        memcpy(dstPtr, buffer, chunk);
+        dstPtr    += (chunk / 4);
+        imageSize -= chunk;
+    }
+
+    return loadAddr;
+}
+
 int main(void)
 {
     uartCfg_t uartCfg = {
@@ -301,6 +359,8 @@ int main(void)
                   .rxTrig = 1,
                   .txTrig = 1, },
     };
+    void (*imgPtr)();
+
     /* Disable watchdog */
     WDT_WSPR = 0xAAAA;
     while (WDT_WWPS & WDT_WWPS_W_PEND_WSPR)
@@ -348,6 +408,12 @@ int main(void)
         gpioClear(HW_LED1_PORT, HW_LED1_PIN);
     } else {
         uartPuts("DDR ERROR");
+    }
+
+    imgPtr = (void *)imageCopy();
+    if ((uint32_t)imgPtr != BAD_ADDRESS) {
+        uartPuts("Jumping to Application");
+        (*imgPtr)();
     }
 
     while (1) {

@@ -1,0 +1,10 @@
+tags
+*~
+*.out.s
+*.axf
+*.out
+*.bin
+*.hex
+*.o
+*.map
+MLO

@@ -242,6 +242,24 @@
 #define CM_DPLL_HSDIVIDER_DIV_MASK 0x1F
 #define CM_DPLL_HSDIVIDER_DIV_SHFT 0
 
+/******************** CLOCK SELECT (CM_DPLL) MODULE ***************************/
+#define CM_CLKSEL_BASE_ADDR 0x44E00500
+
+#define CM_CLKSEL_TIMER7_CLK        HWREG32(CM_CLKSEL_BASE_ADDR + 0x04)
+#define CM_CLKSEL_TIMER2_CLK        HWREG32(CM_CLKSEL_BASE_ADDR + 0x08)
+#define CM_CLKSEL_TIMER3_CLK        HWREG32(CM_CLKSEL_BASE_ADDR + 0x0C)
+#define CM_CLKSEL_TIMER4_CLK        HWREG32(CM_CLKSEL_BASE_ADDR + 0x10)
+#define CM_MAC_CLKSEL               HWREG32(CM_CLKSEL_BASE_ADDR + 0x14)
+#define CM_CLKSEL_TIMER5_CLK        HWREG32(CM_CLKSEL_BASE_ADDR + 0x18)
+#define CM_CLKSEL_TIMER6_CLK        HWREG32(CM_CLKSEL_BASE_ADDR + 0x1C)
+#define CM_CPTS_RFT_CLKSEL          HWREG32(CM_CLKSEL_BASE_ADDR + 0x20)
+#define CM_CLKSEL_TIMER1MS_CLK      HWREG32(CM_CLKSEL_BASE_ADDR + 0x28)
+#define CM_CLKSEL_GFX_FCLK          HWREG32(CM_CLKSEL_BASE_ADDR + 0x2C)
+#define CM_CLKSEL_PRU_ICSS_OCP_CLK  HWREG32(CM_CLKSEL_BASE_ADDR + 0x30)
+#define CM_CLKSEL_LCDC_PIXEL_CLK    HWREG32(CM_CLKSEL_BASE_ADDR + 0x34)
+#define CM_CLKSEL_WDT1_CLK          HWREG32(CM_CLKSEL_BASE_ADDR + 0x38)
+#define CM_CLKSEL_GPIO0_DBCLK       HWREG32(CM_CLKSEL_BASE_ADDR + 0x3C)
+
 
 /******************** CONTROL MODULE *****************************************/
 #define CTRLM_BASE_ADDR 0x44E10000
@@ -438,6 +456,171 @@
 #define CTRLM_VTP_CTRL_CLRZ   BIT_0
 #define CTRLM_VTP_CTRL_READY  BIT_5
 #define CTRLM_VTP_CTRL_ENABLE BIT_6
+
+/********************** INTERRUPT CONTROLLER *********************************/
+#define INTC_BASE_ADDR 0x48200000
+
+#define INTC_REVISION           HWREG32(INTC_BASE_ADDR + 0x00)
+#define INTC_SYSCONFIG          HWREG32(INTC_BASE_ADDR + 0x10)
+#define INTC_SYSSTATUS          HWREG32(INTC_BASE_ADDR + 0x14)
+#define INTC_SIR_IRQ            HWREG32(INTC_BASE_ADDR + 0x40)
+#define INTC_SIR_FIQ            HWREG32(INTC_BASE_ADDR + 0x44)
+#define INTC_CONTROL            HWREG32(INTC_BASE_ADDR + 0x48)
+#define INTC_PROTECTION         HWREG32(INTC_BASE_ADDR + 0x4C)
+#define INTC_IDLE               HWREG32(INTC_BASE_ADDR + 0x50)
+#define INTC_IRQ_PRIORITY       HWREG32(INTC_BASE_ADDR + 0x60)
+#define INTC_FIQ_PRIORITY       HWREG32(INTC_BASE_ADDR + 0x64)
+#define INTC_THRESHOLD          HWREG32(INTC_BASE_ADDR + 0x68)
+#define INTC_ITR(val)           HWREG32(INTC_BASE_ADDR + 0x80 + ((val) * 0x20))
+#define INTC_MIR(val)           HWREG32(INTC_BASE_ADDR + 0x84 + ((val) * 0x20))
+#define INTC_MIR_CLEAR(val)     HWREG32(INTC_BASE_ADDR + 0x88 + ((val) * 0x20))
+#define INTC_MIR_SET(val)       HWREG32(INTC_BASE_ADDR + 0x8C + ((val) * 0x20))
+#define INTC_ISR_SET(val)       HWREG32(INTC_BASE_ADDR + 0x90 + ((val) * 0x20))
+#define INTC_ISR_CLEAR(val)     HWREG32(INTC_BASE_ADDR + 0x94 + ((val) * 0x20))
+#define INTC_PENDING_IRQ(val)   HWREG32(INTC_BASE_ADDR + 0x98 + ((val) * 0x20))
+#define INTC_PENDING_FIQ(val)   HWREG32(INTC_BASE_ADDR + 0x9C + ((val) * 0x20))
+#define INTC_ILR(irq)           HWREG32(INTC_BASE_ADDR + 0x100 + ((irq) * 4))
+
+#define INTC_SYSCONFIG_RESET     BIT_1
+#define INTC_SYSCONFIG_AUTOIDLE  BIT_0
+
+#define INTC_SYSSTATUS_RESETDONE BIT_0
+
+#define INTC_IDLE_TURBO          BIT_1
+#define INTC_IDLE_FUNCIDLE       BIT_0
+
+#define INTC_ILR_PRIORITY(val)   (((val) & 0x3F) << 2)
+
+/*********************** INTERRUPT LIST **************************************/
+#define IRQ_EMUINT               0
+#define IRQ_COMMTX               1
+#define IRQ_COMMRX               2
+#define IRQ_BENCH                3
+#define IRQ_ELM_IRQ              4
+/*      IRQ_Reserved             5      */
+/*      IRQ_Reserved             6      */
+#define IRQ_NMI                  7
+/*      IRQ_Reserved             8      */
+#define IRQ_L3DEBUG              9
+#define IRQ_L3APPINT             10
+#define IRQ_PRCMINT              11
+#define IRQ_EDMACOMPINT          12
+#define IRQ_EDMAMPERR            13
+#define IRQ_EDMAERRINT           14
+/*      IRQ_Reserved             15     */
+#define IRQ_ADC_TSC_GENINT       16
+#define IRQ_USBSSINT             17
+#define IRQ_USBINT0              18
+#define IRQ_USBINT1              19
+#define IRQ_PRU_ICSS_EVTOUT0     20
+#define IRQ_PRU_ICSS_EVTOUT1     21
+#define IRQ_PRU_ICSS_EVTOUT2     22
+#define IRQ_PRU_ICSS_EVTOUT3     23
+#define IRQ_PRU_ICSS_EVTOUT4     24
+#define IRQ_PRU_ICSS_EVTOUT5     25
+#define IRQ_PRU_ICSS_EVTOUT6     26
+#define IRQ_PRU_ICSS_EVTOUT7     27
+#define IRQ_MMCSD1INT            28
+#define IRQ_MMCSD2INT            29
+#define IRQ_I2C2INT              30
+#define IRQ_eCAP0INT             31
+#define IRQ_GPIOINT2A            32
+#define IRQ_GPIOINT2B            33
+#define IRQ_USBWAKEUP            34
+/*      IRQ_Reserved             35     */
+#define IRQ_LCDC                 36
+#define IRQ_GFXINT               37
+/*      IRQ_Reserved             38     */
+#define IRQ_ePWM2INT             39
+#define IRQ_3PGSWRXTHR0          40
+#define IRQ_3PGSWRXINT0          41
+#define IRQ_3PGSWTXINT0          42
+#define IRQ_3PGSWMISC0           43
+#define IRQ_UART3INT             44
+#define IRQ_UART4INT             45
+#define IRQ_UART5INT             46
+#define IRQ_eCAP1INT             47
+/*      IRQ_Reserved             48     */
+/*      IRQ_Reserved             49     */
+/*      IRQ_Reserved             50     */
+/*      IRQ_Reserved             51     */
+#define IRQ_DCAN0_INT0           52
+#define IRQ_DCAN0_INT1           53
+#define IRQ_DCAN0_PARITY         54
+#define IRQ_DCAN1_INT0           55
+#define IRQ_DCAN1_INT1           56
+#define IRQ_DCAN1_PARITY         57
+#define IRQ_ePWM0_TZINT          58
+#define IRQ_ePWM1_TZINT          59
+#define IRQ_ePWM2_TZINT          60
+#define IRQ_eCAP2INT             61
+#define IRQ_GPIOINT3A            62
+#define IRQ_GPIOINT3B            63
+#define IRQ_MMCSD0INT            64
+#define IRQ_McSPI0INT            65
+#define IRQ_TINT0                66
+#define IRQ_TINT1_1MS            67
+#define IRQ_TINT2                68
+#define IRQ_TINT3                69
+#define IRQ_I2C0INT              70
+#define IRQ_I2C1INT              71
+#define IRQ_UART0INT             72
+#define IRQ_UART1INT             73
+#define IRQ_UART2INT             74
+#define IRQ_RTCINT               75
+#define IRQ_RTCALARMINT          76
+#define IRQ_MBINT0               77
+#define IRQ_M3_TXEV              78
+#define IRQ_eQEP0INT             79
+#define IRQ_MCATXINT0            80
+#define IRQ_MCARXINT0            81
+#define IRQ_MCATXINT1            82
+#define IRQ_MCARXINT1            83
+/*      IRQ_Reserved             84     */
+/*      IRQ_Reserved             85     */
+#define IRQ_ePWM0INT             86
+#define IRQ_ePWM1INT             87
+#define IRQ_eQEP1INT             88
+#define IRQ_eQEP2INT             89
+#define IRQ_DMA_INTR_PIN2        90
+#define IRQ_WDT1INT              91
+#define IRQ_TINT4                92
+#define IRQ_TINT5                93
+#define IRQ_TINT6                94
+#define IRQ_TINT7                95
+#define IRQ_GPIOINT0A            96
+#define IRQ_GPIOINT0B            97
+#define IRQ_GPIOINT1A            98
+#define IRQ_GPIOINT1B            99
+#define IRQ_GPMCINT              100
+#define IRQ_DDRERR0              101
+/*      IRQ_Reserved             102    */
+/*      IRQ_Reserved             103    */
+/*      IRQ_Reserved             104    */
+/*      IRQ_Reserved             105    */
+/*      IRQ_Reserved             106    */
+/*      IRQ_Reserved             107    */
+/*      IRQ_Reserved             108    */
+/*      IRQ_Reserved             109    */
+/*      IRQ_Reserved             110    */
+/*      IRQ_Reserved             111    */
+#define IRQ_TCERRINT0            112
+#define IRQ_TCERRINT1            113
+#define IRQ_TCERRINT2            114
+#define IRQ_ADC_TSC_PENINT       115
+/*      IRQ_Reserved             116    */
+/*      IRQ_Reserved             117    */
+/*      IRQ_Reserved             118    */
+/*      IRQ_Reserved             119    */
+#define IRQ_SMRFLX_MPU           120
+#define IRQ_SMRFLX_Core          121
+/*      IRQ_Reserved             122    */
+#define IRQ_DMA_INTR_PIN0        123
+#define IRQ_DMA_INTR_PIN1        124
+#define IRQ_McSPI1INT            125
+/*      IRQ_Reserved             126    */
+/*      IRQ_Reserved             127    */
+#define NUM_IRQS                 128
 
 /*********************** EMIF MODULE *****************************************/
 #define EMIF_BASE_ADDR 0x4C000000
@@ -746,6 +929,7 @@ enum {
 #define SD_SYSCTL_ICE       BIT_0
 #define SD_SYSCTL_ICS       BIT_1
 #define SD_SYSCTL_CEN       BIT_2
+#define SD_SYSCTL_CLKD_MASK (0x3ff << 6)
 #define SD_SYSCTL_CLKD(val) (((val) & 0x3ff) <<  6)
 #define SD_SYSCTL_DTO(val)  (((val) & 0x00f) << 16)
 #define SD_SYSCTL_SRA       BIT_24
@@ -767,9 +951,6 @@ enum {
 #define SD_HCTL_INS         BIT_25
 #define SD_HCTL_REM         BIT_26
 #define SD_HCTL_OBWE        BIT_27
-
-#define SD_BLK_NBLK(val)    (((val) & 0xffff) << 16)
-#define SD_BLK_BLEN(val)    (((val) & 0x0fff) <<  0)
 
 #define SD_CAPA_TCF(base)   ((SD_CAPA(base) >>  0) & 0x3f)
 #define SD_CAPA_TCU         BIT_7
@@ -807,4 +988,150 @@ enum {
 #define SD_STAT_BGE         BIT_2
 #define SD_STAT_TC          BIT_1
 #define SD_STAT_CC          BIT_0
+#define SD_STAT_ERROR_BITS  0xFFFF0000
+
+#define SD_IE_BADA          BIT_29
+#define SD_IE_CERR          BIT_28
+#define SD_IE_ADMAE         BIT_25
+#define SD_IE_ACE           BIT_24
+#define SD_IE_DEB           BIT_22
+#define SD_IE_DCRC          BIT_21
+#define SD_IE_DTO           BIT_20
+#define SD_IE_CIE           BIT_19
+#define SD_IE_CEB           BIT_18
+#define SD_IE_CCRC          BIT_17
+#define SD_IE_CTO           BIT_16
+#define SD_IE_BSR           BIT_10
+#define SD_IE_OBI           BIT_9
+#define SD_IE_CIRQ          BIT_8
+#define SD_IE_CREM          BIT_7
+#define SD_IE_CINS          BIT_6
+#define SD_IE_BRR           BIT_5
+#define SD_IE_BWR           BIT_4
+#define SD_IE_DMA           BIT_3
+#define SD_IE_BGE           BIT_2
+#define SD_IE_TC            BIT_1
+#define SD_IE_CC            BIT_0
+#define SD_IE_ERROR_BITS    0xFFFF0000
+
+#define SD_ISE_BADA         BIT_29
+#define SD_ISE_CERR         BIT_28
+#define SD_ISE_ADMAE        BIT_25
+#define SD_ISE_ACE          BIT_24
+#define SD_ISE_DEB          BIT_22
+#define SD_ISE_DCRC         BIT_21
+#define SD_ISE_DTO          BIT_20
+#define SD_ISE_CIE          BIT_19
+#define SD_ISE_CEB          BIT_18
+#define SD_ISE_CCRC         BIT_17
+#define SD_ISE_CTO          BIT_16
+#define SD_ISE_BSR          BIT_10
+#define SD_ISE_OBI          BIT_9
+#define SD_ISE_CIRQ         BIT_8
+#define SD_ISE_CREM         BIT_7
+#define SD_ISE_CINS         BIT_6
+#define SD_ISE_BRR          BIT_5
+#define SD_ISE_BWR          BIT_4
+#define SD_ISE_DMA          BIT_3
+#define SD_ISE_BGE          BIT_2
+#define SD_ISE_TC           BIT_1
+#define SD_ISE_CC           BIT_0
+#define SD_ISE_ERROR_BITS   0xFFFF0000
+
+#define SD_PSTATE_CLEV      BIT_24
+#define SD_PSTATE_DLEV(base) ((SD_PSTATE(base) >> 20) & 0x7)
+#define SD_PSTATE_WP        BIT_19
+#define SD_PSTATE_CDPL      BIT_18
+#define SD_PSTATE_CSS       BIT_17
+#define SD_PSTATE_CINS      BIT_16
+#define SD_PSTATE_BRE       BIT_11
+#define SD_PSTATE_BWE       BIT_10
+#define SD_PSTATE_RTA       BIT_9
+#define SD_PSTATE_WTA       BIT_8
+#define SD_PSTATE_DLA       BIT_2
+#define SD_PSTATE_DATI      BIT_1
+#define SD_PSTATE_CMDI      BIT_0
+
+#define SD_BLK_NBLK(val)     (((val) & 0xffff) << 16)
+#define SD_BLK_BLEN(val)     (((val) & 0x0fff) <<  0)
+
+#define SD_CMD_INDX(val)     (((val) & 0x3f) << 24)
+#define SD_CMD_CMD_TYPE(val) (((val) & 0x03) << 22)
+#define SD_CMD_DP            BIT_21
+#define SD_CMD_CICE          BIT_20
+#define SD_CMD_CCCE          BIT_19
+#define SD_CMD_RSP_TYPE(val) (((val) & 0x03) << 16)
+#define SD_CMD_MSBS          BIT_5
+#define SD_CMD_DDIR          BIT_4
+#define SD_CMD_ACEN          BIT_2
+#define SD_CMD_BCE           BIT_1
+#define SD_CMD_DE            BIT_0
+
+/*************************** TIMER1 SYSTICK ***********************************/
+#define SYSTICK_BASE_ADDR 0x44E31000
+
+#define SYSTICK_TIDR        HWREG32(SYSTICK_BASE_ADDR + 0x00)
+#define SYSTICK_TIOCP_CFG   HWREG32(SYSTICK_BASE_ADDR + 0x10)
+#define SYSTICK_TISTAT      HWREG32(SYSTICK_BASE_ADDR + 0x14)
+#define SYSTICK_TISR        HWREG32(SYSTICK_BASE_ADDR + 0x18)
+#define SYSTICK_TIER        HWREG32(SYSTICK_BASE_ADDR + 0x1C)
+#define SYSTICK_TWER        HWREG32(SYSTICK_BASE_ADDR + 0x20)
+#define SYSTICK_TCLR        HWREG32(SYSTICK_BASE_ADDR + 0x24)
+#define SYSTICK_TCRR        HWREG32(SYSTICK_BASE_ADDR + 0x28)
+#define SYSTICK_TLDR        HWREG32(SYSTICK_BASE_ADDR + 0x2C)
+#define SYSTICK_TTGR        HWREG32(SYSTICK_BASE_ADDR + 0x30)
+#define SYSTICK_TWPS        HWREG32(SYSTICK_BASE_ADDR + 0x34)
+#define SYSTICK_TMAR        HWREG32(SYSTICK_BASE_ADDR + 0x38)
+#define SYSTICK_TCAR1       HWREG32(SYSTICK_BASE_ADDR + 0x3C)
+#define SYSTICK_TSICR       HWREG32(SYSTICK_BASE_ADDR + 0x40)
+#define SYSTICK_TCAR2       HWREG32(SYSTICK_BASE_ADDR + 0x44)
+#define SYSTICK_TPIR        HWREG32(SYSTICK_BASE_ADDR + 0x48)
+#define SYSTICK_TNIR        HWREG32(SYSTICK_BASE_ADDR + 0x4C)
+#define SYSTICK_TCVR        HWREG32(SYSTICK_BASE_ADDR + 0x50)
+#define SYSTICK_TOCR        HWREG32(SYSTICK_BASE_ADDR + 0x54)
+#define SYSTICK_TOWR        HWREG32(SYSTICK_BASE_ADDR + 0x58)
+
+#define SYSTICK_TIOCP_EMUFREE       BIT_5
+#define SYSTICK_TIOCP_IDLEMODE(val) (((val) & 0x3) << 3)
+#define SYSTICK_TIOCP_ENAWAKEUP     BIT_2
+#define SYSTICK_TIOCP_SOFTRESET     BIT_1
+#define SYSTICK_TIOCP_AUTOIDLE      BIT_0
+
+#define SYSTICK_TISTAT_RESETDONE    BIT_0
+
+#define SYSTICK_TISR_TCAR_IT_FLAG   BIT_2
+#define SYSTICK_TISR_OVF_IT_FLAG    BIT_1
+#define SYSTICK_TISR_MAT_IT_FLAG    BIT_0
+
+#define SYSTICK_TIER_TCAR_IT_ENA    BIT_2
+#define SYSTICK_TIER_OVF_IT_ENA     BIT_1
+#define SYSTICK_TIER_MAT_IT_ENA     BIT_0
+
+#define SYSTICK_TCLR_GPO_CFG        BIT_14
+#define SYSTICK_TCLR_CAPT_MODE      BIT_13
+#define SYSTICK_TCLR_PT             BIT_12
+#define SYSTICK_TCLR_TRG(val)       (((val) & 0x3) << 10)
+#define SYSTICK_TCLR_TCM(val)       (((val) & 0x3) << 8)
+#define SYSTICK_TCLR_SCPWM          BIT_7
+#define SYSTICK_TCLR_CE             BIT_6
+#define SYSTICK_TCLR_PRE            BIT_5
+#define SYSTICK_TCLR_PTV(val)       (((val) & 0x7) << 2)
+#define SYSTICK_TCLR_AR             BIT_1
+#define SYSTICK_TCLR_ST             BIT_0
+
+#define SYSTICK_TSICR_POSTED        BIT_2
+
+#define SYSTICK_TWPS_W_PEND_TOWR    BIT_9
+#define SYSTICK_TWPS_W_PEND_TOCR    BIT_8
+#define SYSTICK_TWPS_W_PEND_TCVR    BIT_7
+#define SYSTICK_TWPS_W_PEND_TNIR    BIT_6
+#define SYSTICK_TWPS_W_PEND_TPIR    BIT_5
+#define SYSTICK_TWPS_W_PEND_TMAR    BIT_4
+#define SYSTICK_TWPS_W_PEND_TTGR    BIT_3
+#define SYSTICK_TWPS_W_PEND_TLDR    BIT_2
+#define SYSTICK_TWPS_W_PEND_TCRR    BIT_1
+#define SYSTICK_TWPS_W_PEND_TCLR    BIT_0
+
+#define SYSTICK_TOCR_OVF_COUNTER_VALUE(val) (((val) & 0xfff))
+
 #endif

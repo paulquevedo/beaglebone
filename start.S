@@ -1,0 +1,280 @@
+/******************************************************************************
+ * start.S
+ *
+ * Startup code for the am335x beaglebone
+ *
+ * Paul Quevedo 2012
+ *****************************************************************************/
+
+#define BIT_0  0x00000001
+#define BIT_1  0x00000002
+#define BIT_2  0x00000004
+#define BIT_3  0x00000008
+#define BIT_4  0x00000010
+#define BIT_5  0x00000020
+#define BIT_6  0x00000040
+#define BIT_7  0x00000080
+#define BIT_8  0x00000100
+#define BIT_9  0x00000200
+#define BIT_10 0x00000400
+#define BIT_12 0x00001000
+#define BIT_13 0x00002000
+#define BIT_14 0x00004000
+#define BIT_15 0x00008000
+#define BIT_16 0x00010000
+#define BIT_17 0x00020000
+#define BIT_18 0x00040000
+#define BIT_19 0x00080000
+#define BIT_20 0x00100000
+#define BIT_21 0x00200000
+#define BIT_22 0x00400000
+#define BIT_23 0x00800000
+#define BIT_24 0x01000000
+#define BIT_25 0x02000000
+#define BIT_26 0x04000000
+#define BIT_27 0x08000000
+#define BIT_28 0x10000000
+#define BIT_29 0x20000000
+#define BIT_30 0x40000000
+#define BIT_31 0x80000000
+
+/* CPSR Modes */
+#define MODE_USR 0x10
+#define MODE_FIQ 0x11
+#define MODE_IRQ 0x12
+#define MODE_SVC 0x13
+#define MODE_ABT 0x17
+#define MODE_UND 0x1B
+#define MODE_SYS 0x1F
+
+/* CPSR Control Bits */
+#define I_BIT    0x80 /* IRQ Disable */
+#define F_BIT    0x40 /* FIQ Disable */
+
+                        /* Linker script defines */
+    .global _exception_table_addr
+    .global _stack_bottom
+    .global _stack_irq_top
+    .global _stack_fiq_top
+    .global _stack_und_top
+    .global _stack_abt_top
+    .global _stack_svc_top
+    .global _stack_top
+    .global _bss_start
+    .global _bss_end
+    .global _heap_start
+    .global _heap_end
+
+    .text
+    .section .exception_table,"ax",%progbits
+    .code 32
+
+_exception_table:
+    b _reset_eh
+    b _undefined_eh
+    b _swi_eh
+    b _prefetch_abort_eh
+    b _abort_eh
+    b .
+    b _irq_eh
+    b _fiq_eh
+
+    .text
+    .section .exception_table,"ax",%progbits
+    .code 32
+    .align 4
+
+/******************************************************************************
+ * _reset_eh
+ *
+ *      Reset exception handler. Configures the stack, ctr0 init,
+ *  enables branch predicition then hands off to main()
+ *
+ ******************************************************************************/
+_reset_eh:
+    /* Initialize stacks for each mode
+     * Note that cpsr_c is an ARM intrinsic for the control bits of the cpsr */
+    msr cpsr_c, #(MODE_UND | I_BIT | F_BIT)
+    ldr r0, =_stack_und_top
+    mov sp, r0
+
+    msr cpsr_c, #(MODE_ABT | I_BIT | F_BIT)
+    ldr r0, =_stack_abt_top
+    mov sp, r0
+
+    msr cpsr_c, #(MODE_FIQ | I_BIT | F_BIT)
+    ldr r0, =_stack_fiq_top
+    mov sp, r0
+
+    msr cpsr_c, #(MODE_IRQ | I_BIT | F_BIT)
+    ldr r0, =_stack_irq_top
+    mov sp, r0
+
+    msr cpsr_c, #(MODE_SVC | I_BIT | F_BIT)
+    ldr r0, =_stack_svc_top
+    mov sp, r0
+
+    msr cpsr_c, #(MODE_SYS | I_BIT | F_BIT)
+    ldr r0, =_stack_top
+    mov sp, r0
+
+    /* Invalidate branch predication: DDI 0334B s3.2.41 */
+    mov r0, #0
+    mcr p15, #0, r0, c7, c5, #6
+    isb
+
+    /* Enable branch predication:  DDI 0334B s3.2.26 */
+    mrc p15, #0, r0, c1, c0, #0
+    orr r0, r0, #0x00000800       /* BIT_11, Z */
+    mcr p15, #0, r0, c1, c0, #0
+
+    /* Watermark the stacks */
+    ldr r0, =_stack_bottom
+    ldr r1, =_stack_top
+    ldr r2, =0x5a5a5a5a
+    /* Descending stack, fill from bottom up */
+stack_loop:
+    str r2, [r0], #4
+    cmp r0, r1
+    blt stack_loop
+
+    /* Watermark the heap */
+    ldr r0, =_heap_start
+    ldr r1, =_heap_end
+    ldr r2, =0xefefefef
+heap_loop:
+    str r2, [r0], #4
+    cmp r0, r1
+    blt heap_loop
+
+    /* Zero out .bss section */
+    ldr r0, =_bss_start
+    ldr r1, =_bss_end
+    mov r2, #0
+bss_loop:
+    str r2, [r0], #4
+    cmp r0, r1
+    blt bss_loop
+
+    /* Write vector offset register, DDI 0334B s3.2.69 */
+    ldr r0, =_exception_table_addr
+    mcr p15, #0, r0, c12, c0, #0
+    dsb
+
+call_main:
+    ldr r10,=main   /* Addres of main() */
+    mov lr,pc       /* Dummy return */
+    bx  r10         /* Bye-bye */
+
+dead_loop:
+    b dead_loop
+
+
+/******************************************************************************
+ * _irq_eh
+ *
+ *      IRQ exception handler. Saves context and re-enables interrupt
+ *  controller to allow higher priority interrupts
+ *
+ *  Refer to ARM DEN0013C s12
+ *
+ ******************************************************************************/
+#define INTC_SIR_IRQ   0x48200040
+#define MASK_SIR_IRQ   0x7f
+#define INTC_CONTROL   0x48200048
+#define MASK_NEWIRQAGR 0x1
+#define INTC_PRIORITY  0x48200060
+#define MASK_PRIORITY  0x7f
+#define INTC_THRESHOLD 0x48200068
+#define MASK_THRESHOLD 0xff
+    .global isrVectorTable
+    .align 4
+_irq_eh:
+    sub   lr, lr, #4          /* Correct return address */
+    stmfd sp!, {r0-r12, lr}   /* Save context */
+    mrs   r12, SPSR           /* Grab the SPSR */
+    stmfd sp!, {r12}          /* Save SPSR */
+
+    ldr   r0, =INTC_THRESHOLD /* Grab the current priority threshold */
+    ldr   r1, [r0]
+    stmfd sp!, {r1}           /* Save priority threshold */
+
+    ldr   r1, =INTC_PRIORITY  /* Grab priority of IRQ */
+    ldr   r2, [r1]
+    and   r2, r2, #MASK_PRIORITY
+    str   r2, [r0]            /* Set current priority as threshold */
+
+    ldr   r1, =INTC_SIR_IRQ   /* Grab current IRQ number */
+    ldr   r3, [r1]
+    and   r3, r3, #MASK_SIR_IRQ
+
+    stmfd sp!, {r2}           /* Store IRQ priority */
+
+    mov   r0, #MASK_NEWIRQAGR /* Enable new interrupts on controller */
+    ldr   r1, =INTC_CONTROL
+
+    cmp   r2, #0              /* Ensure current IRQ is maskable */
+    strne r0,[r1]
+    dsb                       /* Wait for pipeline to flush */
+
+    mov   r0, #MODE_SYS       /* Change to system mode */
+    orrne r0, r0, #I_BIT      /* Enable IRQ if priority != 0 */
+    msr   cpsr_c, r0
+
+    stmfd sp!, {lr}            /* Save MODE_SYS lr */
+
+    ldr   r0, =isrVectorTable  /* Load vector table address */
+    ldr   r1, [r0, r3, lsl #2] /* Load address of the ISR */
+    blx   r1                   /* Jump to isr in ARM Mode */
+
+    ldmfd sp!, {lr}            /* Restore MODE_SYS lr */
+
+                               /* Back to IRQ Mode, disable ARM IRQ */
+    msr   cpsr_c, #(MODE_IRQ | I_BIT)
+
+    ldmfd sp!, {r2}            /* Retrieve IRQ priority */
+
+    cmp   r2, #0
+    moveq r0, #MASK_NEWIRQAGR  /* If unmaskable irq now enable new IRQs */
+    ldreq r1, =INTC_CONTROL
+    streq r0, [r1]
+
+    ldmfd sp!, {r1}            /* Retrieve priority threshold */
+    ldr   r0, =INTC_THRESHOLD
+    str   r1, [r0]             /* Restore priority threshold */
+
+    ldmfd sp!, {r12}
+    msr   spsr, r12            /* Restore SPSR */
+
+    ldmfd sp!, {r0-r12,pc}^    /* Restore context and exit */
+
+
+/******************************************************************************
+ * unhandled exceptions
+ *
+ *      Loop forever
+ *
+ ******************************************************************************/
+    .align 4
+_undefined_eh:
+    b _undefined_eh
+
+    .align 4
+_swi_eh:
+    b _swi_eh
+
+    .align 4
+_prefetch_abort_eh:
+    b _prefetch_abort_eh
+
+    .align 4
+_abort_eh:
+    b   _abort_eh
+
+    .align 4
+_fiq_eh:
+    b   _fiq_eh     /* Not supported on this chip */
+
+    .end
+
+
