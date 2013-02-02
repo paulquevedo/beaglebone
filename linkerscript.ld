@@ -3,7 +3,13 @@
  *
  * Bootloader linker script for the TI AM3559/BeagleBone
  *
- * Paul Quevedo 2012
+ * Copyright (C) 2013 Paul Quevedo
+ *
+ * This program is free software.  It comes without any warranty, to the extent
+ * permitted by applicable law.  You can redistribute it and/or modify it under
+ * the terms of the WTF Public License (WTFPL), Version 2, as published by
+ * Sam Hocevar.  See http://sam.zoy.org/wtfpl/COPYING for more details.
+ *
  ******************************************************************************/
 
 MEMORY

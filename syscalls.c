@@ -1,9 +1,18 @@
 /*******************************************************************************
-* syscalls.c
-*
-* Refer to http://neptune.billgatliff.com/newlib.html as a reference on
-* porting newlib
-*******************************************************************************/
+ *
+ * syscalls.c
+ *
+ * Refer to http://neptune.billgatliff.com/newlib.html as a reference on
+ * porting newlib
+ *
+ * Copyright (C) 2013 Paul Quevedo
+ *
+ * This program is free software.  It comes without any warranty, to the extent
+ * permitted by applicable law.  You can redistribute it and/or modify it under
+ * the terms of the WTF Public License (WTFPL), Version 2, as published by
+ * Sam Hocevar.  See http://sam.zoy.org/wtfpl/COPYING for more details.
+ *
+ *******************************************************************************/
 #include <sys/stat.h>
 #include "globalDefs.h"
 #include "hardware.h"

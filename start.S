@@ -3,9 +3,14 @@
  *
  * Startup code for the am335x beaglebone
  *
- * Paul Quevedo 2012
+ * Copyright (C) 2013 Paul Quevedo
+ *
+ * This program is free software.  It comes without any warranty, to the extent
+ * permitted by applicable law.  You can redistribute it and/or modify it under
+ * the terms of the WTF Public License (WTFPL), Version 2, as published by
+ * Sam Hocevar.  See http://sam.zoy.org/wtfpl/COPYING for more details.
+ *
  *****************************************************************************/
-
 #define BIT_0  0x00000001
 #define BIT_1  0x00000002
 #define BIT_2  0x00000004
