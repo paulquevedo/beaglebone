@@ -52,7 +52,6 @@ static void uartFifoConfig(uint32_t base, uartCfg_t *cfg)
     /* Restore values */
     uint32_t lcrValue;
     uint32_t efrValue;
-    uint32_t mcrValue;
 
     /* FIFO Config Values */
     uint32_t fcrValue = 0;
@@ -82,11 +81,11 @@ static void uartFifoConfig(uint32_t base, uartCfg_t *cfg)
     UART_LCR(base) = REG_CONFIG_MODE_A;
 
     /* 4. Submode TCR_TLR part 2/2 to access TLR */
-    mcrValue = UART_MCR(base);
-    UART_MCR(base) |= UART_MCR_TCRTLR;
+    UART_MCR(base) = UART_MCR_TCRTLR;
 
     /* 5. Write FCR */
-    UART_FCR(base) = fcrValue;
+    UART_FCR(base) = fcrValue | UART_FCR_RX_FIFO_CLEAR
+                              | UART_FCR_TX_FIFO_CLEAR;
 
     /* 6. Configuration mode B to access EFR */
     UART_LCR(base) = REG_CONFIG_MODE_B;
@@ -104,7 +103,7 @@ static void uartFifoConfig(uint32_t base, uartCfg_t *cfg)
     UART_LCR(base) = REG_CONFIG_MODE_A;
 
     /* 11. Restore MCR */
-    UART_MCR(base) = mcrValue;
+    UART_MCR(base) = 0;
 
     /* 12. Restore LCR */
     UART_LCR(base) = lcrValue;
@@ -146,7 +145,7 @@ static void uartBaudConfig(uint32_t base, uartCfg_t *cfg)
     UART_EFR(base) = efrValue;
 
     /* 8-bit words, no parity, 1 stop bit */
-    UART_LCR(base) = UART_LCR_CHAR_LENGTH(0x3);
+    UART_LCR(base)  = UART_LCR_CHAR_LENGTH(0x3);
 
     UART_MDR1(base) = UART_MDR1_MODESELECT(UART_MDR1_MODE_16X);
 }
@@ -196,7 +195,7 @@ int uartConfig(uint32_t inst, uartCfg_t *cfg)
 int uartWrite(uint32_t inst, uint8_t *data, uint32_t len)
 {
     uint32_t base = inst2Base[inst];
-    uint32_t txLen;
+    int txLen;
 
     if (!uartInitialized[inst])
         return 0;
@@ -204,7 +203,7 @@ int uartWrite(uint32_t inst, uint8_t *data, uint32_t len)
     for (txLen = 0; txLen < len; txLen++) {
         uint32_t retry = 1000;
         /* Wait for TXFIFO to be empty */
-        while (!(UART_LSR(base) & UART_LSR_TXSRE) && retry--)
+        while (!(UART_LSR(base) & UART_LSR_TXSRE) && --retry)
             ;
 
         if (retry)
@@ -219,15 +218,15 @@ int uartWrite(uint32_t inst, uint8_t *data, uint32_t len)
 int uartRead(uint32_t inst, uint8_t *data, uint32_t len)
 {
     uint32_t base = inst2Base[inst];
-    uint32_t rxLen;
+    int rxLen;
 
     if (!uartInitialized[inst])
         return 0;
 
     for (rxLen = 0; rxLen < len; rxLen++) {
-        uint32_t retry = 100;
+        uint32_t retry = 1000;
         /* Wait for RXFIFO to have data */
-        while (!(UART_LSR(base) & UART_LSR_RXFIFOE) && retry--)
+        while (!(UART_LSR(base) & UART_LSR_RXFIFOE) && --retry)
             ;
 
         if (retry)
@@ -237,6 +236,19 @@ int uartRead(uint32_t inst, uint8_t *data, uint32_t len)
     }
 
     return rxLen;
+}
+
+void uartFlush(uint32_t inst, bool32_t txFifo)
+{
+    uint32_t base = inst2Base[inst];
+
+    if (!uartInitialized[inst])
+        return;
+
+    if (txFifo)
+        UART_FCR(base) |= UART_FCR_TX_FIFO_CLEAR;
+    else
+        UART_FCR(base) |= UART_FCR_RX_FIFO_CLEAR;
 }
 
 void uartPuts(char *str)

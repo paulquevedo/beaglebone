@@ -136,6 +136,15 @@ static sdhcCmd_t cmd17 = {
     .nBlks     = 1,
     .blkSize   = 512,
 };
+static sdhcCmd_t cmd24 = {
+    .cmdIdx    = 24,
+    .cmdType   = CMDTYPE_NORMAL,
+    .rspType   = RSPTYPE_48BIT,
+    .xferFlags = XFER_FLAG_CICE | XFER_FLAG_CCCE,
+    .cmdArg    = 0,
+    .nBlks     = 1,
+    .blkSize   = 512,
+};
 static sdhcCmd_t acmd41 = {
     .cmdIdx    = 41,
     .cmdType   = CMDTYPE_NORMAL,
@@ -283,7 +292,7 @@ static int sdhcSendCmd(uint32_t inst, sdhcCmd_t *cmd)
     if (cmd->nBlks)
         cmdReg |= SD_CMD_DP;
 
-    SD_STAT(base) = 0xffffffff; /* Clear all status bits */
+    SD_STAT(base) = SD_STAT_ERROR_BITS | SD_STAT_CC;
 
     SD_BLK(base) = SD_BLK_NBLK(cmd->nBlks);
     if (cmd->nBlks) {
@@ -655,6 +664,39 @@ int32_t sdhcReadBlock(sdhcCard_t *card, uint32_t block, uint32_t *buffer)
             }
         }
         if (status & SD_STAT_TC) {
+            SD_STAT(base) |= SD_STAT_TC;
+            break;
+        }
+    }
+    return OK;
+}
+
+/*****************************************************************************
+ * sdhcWriteBlock()
+ *
+ *  Write data into the argument block
+ *
+ *****************************************************************************/
+int32_t sdhcWriteBlock(sdhcCard_t *card, uint32_t block, const uint32_t *buffer)
+{
+    uint32_t base = inst2Base[card->inst];
+
+    cmd24.cmdArg = block;
+    sdhcSendCmd(card->inst, &cmd24);
+
+#if 0
+    iprintf("SDHC Write Block %d\n\r", block);
+#endif
+
+    while (1) {
+        int i;
+
+        if (SD_PSTATE(base) & SD_PSTATE_BWE) {
+            for (i = 0; i < cmd24.blkSize / 4; i++) {
+                SD_DATA(base) = *buffer++;
+            }
+        }
+        if (SD_STAT(base)  & SD_STAT_TC) {
             SD_STAT(base) |= SD_STAT_TC;
             break;
         }

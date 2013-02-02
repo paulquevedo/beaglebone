@@ -12,8 +12,9 @@
 #include "am335x.h"
 #include "hardware.h"
 #include "ff.h"
+#include "xmodem.h"
 
-static void delay(uint32_t count)
+static void delay(volatile uint32_t count)
 {
     while (count--)
         ;
@@ -298,7 +299,6 @@ static int ddrtest(void)
 #define BAD_ADDRESS 0xffffffff
 static uint32_t imageCopy(void)
 {
-    FATFS fatfs;
     FIL fp;
     UINT bytesRead;
     FRESULT result;
@@ -307,33 +307,35 @@ static uint32_t imageCopy(void)
     uint32_t *dstPtr;
     static uint32_t buffer[512];
 
-    memset(&fatfs, 0, sizeof(fatfs));
     memset(&fp, 0, sizeof(fp));
-
-    result = f_mount(0, &fatfs);
-    if (result != FR_OK) {
-        uartPuts("Failed to mount drive");
-        return BAD_ADDRESS;
-    }
 
     result = f_open(&fp, "/app", FA_READ);
     if (result != FR_OK) {
-        uartPuts("Failed to open application file");
-        return BAD_ADDRESS;
+        result = f_open(&fp, "/APP", FA_READ);
+        if (result != FR_OK) {
+            uartPuts("Failed to open application file");
+            return BAD_ADDRESS;
+        }
     }
 
     if (f_read(&fp, &imageSize, 4, &bytesRead) != FR_OK || bytesRead != 4) {
         uartPuts("Failed to Read application File");
+        f_close(&fp);
         return BAD_ADDRESS;
     }
 
     if (f_read(&fp, &loadAddr, 4, &bytesRead) != FR_OK || bytesRead != 4) {
         uartPuts("Failed to Read application File");
+        f_close(&fp);
         return BAD_ADDRESS;
     }
 
     imageSize -= 8; /* Remove header info */
+#if DEBUG
     iprintf("Loading to addr %08x size %x\n\r", loadAddr, imageSize);
+#else
+    uartPuts("Image loading...");
+#endif
     dstPtr = (uint32_t *)loadAddr;
 
     while (imageSize) {
@@ -341,6 +343,7 @@ static uint32_t imageCopy(void)
         if (f_read(&fp, buffer, chunk, &bytesRead) != FR_OK
                                      || bytesRead  != chunk) {
             uartPuts("Failed to read a chunk");
+            f_close(&fp);
             return BAD_ADDRESS;
         }
         memcpy(dstPtr, buffer, chunk);
@@ -348,8 +351,79 @@ static uint32_t imageCopy(void)
         imageSize -= chunk;
     }
 
+    f_close(&fp);
+
     return loadAddr;
 }
+
+static bool32_t isImagePresent(void)
+{
+    FIL fp;
+    FRESULT result;
+
+    memset(&fp, 0, sizeof(fp));
+
+    result = f_open(&fp, "/app", FA_READ);
+    if (result == FR_OK)
+        f_close(&fp);
+
+    return (result == FR_OK);
+}
+
+static int32_t loadNewImage(void)
+{
+    static uint8_t rxBuffer[1024];
+    xmodemCfg_t xmodemCfg = {
+        .numRetries = 0x2000,
+        .uartFd = UART_CONSOLE,
+    };
+
+    FIL fp;
+    UINT bytesWritten;
+    int32_t retVal = OK;
+    int xferStarted = FALSE;
+
+    xmodemInit(&xmodemCfg);
+
+    if (f_open(&fp, "/app", FA_WRITE | FA_CREATE_ALWAYS) != FR_OK) {
+        uartPuts("Failed to create file");
+        return ERROR;
+    }
+    f_lseek(&fp, 0);
+
+    uartPuts("Waiting for XMODEM Transfer to begin");
+
+    while (1) {
+        int len = xmodemRecv(rxBuffer, sizeof(rxBuffer));
+
+        if (len == 0) {
+            uartPuts("Programming succesfull!");
+            break;
+        }
+        else if (len > 0) {
+            xferStarted = TRUE;
+            if (f_write(&fp, rxBuffer, len, &bytesWritten) != FR_OK
+                                          || bytesWritten  != len) {
+                xmodemAbort();
+                uartPuts("Failed to write chunk");
+                retVal = ERROR;
+                break;
+            }
+        }
+        else if (xferStarted) {
+            xmodemAbort();
+            uartPuts("Error in transfer");
+            retVal = ERROR;
+            break;
+        }
+
+        gpioToggle(HW_LED0_PORT, HW_LED0_PIN);
+    }
+    f_close(&fp);
+
+    return retVal;
+}
+
 
 int main(void)
 {
@@ -359,7 +433,8 @@ int main(void)
                   .rxTrig = 1,
                   .txTrig = 1, },
     };
-    void (*imgPtr)();
+    bool32_t imagePresent;
+    FATFS fatfs;
 
     /* Disable watchdog */
     WDT_WSPR = 0xAAAA;
@@ -408,15 +483,58 @@ int main(void)
         gpioClear(HW_LED1_PORT, HW_LED1_PIN);
     } else {
         uartPuts("DDR ERROR");
+        while (1) {
+            gpioToggle(HW_LED1_PORT, HW_LED1_PIN);
+            delay(0x4FFFF);
+        }
     }
 
-    imgPtr = (void *)imageCopy();
-    if ((uint32_t)imgPtr != BAD_ADDRESS) {
-        uartPuts("Jumping to Application");
-        (*imgPtr)();
+    memset(&fatfs, 0, sizeof(fatfs));
+    if (f_mount(0, &fatfs) != FR_OK) {
+        uartPuts("Failed to mount SD Card");
+        while (1) {
+            gpioToggle(HW_LED1_PORT, HW_LED1_PIN);
+            delay(0x4FFFF);
+        }
     }
 
-    while (1) {
+    if (isImagePresent()) {
+        uint8_t c;
+        int i;
+        uartPuts("Press any key to transfer new image...");
+
+        for (i = 4; i >= 0; i--) {
+            if (i)
+                uartPuts("Tick...");
+            else
+                uartPuts("Tock!");
+            delay(0x1FFFFF);
+            if (uartRead(UART_CONSOLE, &c, 1) == 1) {
+                loadNewImage();
+                break;
+            }
+        }
+    }
+
+    imagePresent = isImagePresent();
+    while(1) {
+        if (!imagePresent) {
+            uartPuts("No image detected. Waiting for file transfer...");
+
+            imagePresent = loadNewImage() != ERROR;
+        }
+
+        if (imagePresent) {
+            void (*imgPtr)() = (void *)imageCopy();
+
+            if ((uint32_t)imgPtr != BAD_ADDRESS) {
+                uartPuts("Jumping to Application");
+                (*imgPtr)();
+            }
+            uartPuts("Failed to load image");
+            imagePresent = FALSE;
+        }
+
         gpioToggle(HW_LED0_PORT, HW_LED0_PIN);
         delay(0x6FFFF);
     }

@@ -106,6 +106,7 @@ DRESULT disk_read(BYTE drv, BYTE *buff, DWORD sector, BYTE count)
                     break;
                 }
                 buff += card->blkLen;
+                sector++;
             }
         }
         else {
@@ -129,7 +130,33 @@ DRESULT disk_read(BYTE drv, BYTE *buff, DWORD sector, BYTE count)
 #if _USE_WRITE
 DRESULT disk_write(BYTE drv, const BYTE *buff, DWORD sector, BYTE count)
 {
-    return RES_ERROR;
+    DRESULT result = RES_OK;
+
+    switch (drv) {
+    case DRIVE_SDHC_0:
+        if (fatdev[drv].initialized) {
+            sdhcCard_t *card = fatdev[drv].devCtx;
+
+            while (count--) {
+                if (sdhcWriteBlock(card, sector, (const uint32_t *)buff)
+                                                                     == ERROR) {
+                    result = RES_ERROR;
+                    break;
+                }
+                buff += card->blkLen;
+                sector++;
+            }
+        }
+        else {
+            result = RES_ERROR;
+        }
+        break;
+    default:
+        result = RES_ERROR;
+        break;
+    }
+
+    return result;
 }
 #endif
 
@@ -141,5 +168,16 @@ DRESULT disk_write(BYTE drv, const BYTE *buff, DWORD sector, BYTE count)
 DRESULT disk_ioctl(BYTE drv, BYTE ctrl, void *buff)
 {
     return RES_OK;
+}
+#endif
+
+#if _USE_WRITE
+DWORD get_fattime(void)
+{
+    return (((2013-1980) << 25) | ( 1 << 21)    /* Month */
+                                | ( 1 << 16)    /* Day   */
+                                | (12 << 11)    /* Hour  */
+                                | ( 0 <<  5)    /* Min   */
+                                | ( 0 <<  0));  /* Sec   */
 }
 #endif

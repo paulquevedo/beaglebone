@@ -11,6 +11,8 @@
 #ifndef __HARDWARE_H__
 #define __HARDWARE_H__
 
+#define swap16(x) \
+    asm volatile ("rev16 %[out], %[in]" : [out] "=r" (x) : [in] "r" (x))
 #define swap32(x) \
     asm volatile ("rev %[out], %[in]" : [out] "=r" (x) : [in] "r" (x))
 
@@ -177,5 +179,6 @@ typedef struct {
 extern int  uartConfig(uint32_t inst, uartCfg_t *cfg);
 extern int  uartWrite (uint32_t inst, uint8_t *data, uint32_t len);
 extern int  uartRead  (uint32_t inst, uint8_t *data, uint32_t len);
+extern void uartFlush (uint32_t inst, bool32_t txFifo);
 extern void uartPuts  (char *str);
 #endif

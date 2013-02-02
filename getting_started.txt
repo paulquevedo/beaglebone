@@ -127,3 +127,36 @@ From StarterWare/build/armv7a/gcc/am335x/beaglebone/gpio/Debug
 Breakpoints don't work if installed then mon reset init called afterwards
     Probably something to do with the ddr not being up until after the loader
     runs
+
+#[Quirks]
+As far as I can tell the JTAG cannot access any modules NOT on the L3 or L4
+interconnect buses. This includes the internal SRAM at 0x402F0400. That means
+you won't be able to debug anything in that 64K block. Hardware breakpoints
+seem to work if injected directly via openocd telnet interface. Trying
+through GDB will fail as GDB attempts a memory read access first.
+If you take a look at the linkerscript from the bootloader i've moved almost
+all of the code into the L3SRAM block. This on chip memory is connected to
+the processor via the L3 interconnect which means the JTAG can access it
+without issues. Still you can't inject a breakpoint from reset though as the
+L3 interconnect clock is not operational until the boot code runs! This means
+you'll have to start your code then issue a halt before you can add a
+breakpoint! Oh joy! If theres something I'm missing here that avoids all this
+crap don't hold out on me!
+
+#[Xmodem]
+The xmodem drivers probably not great but It gets the job done. You may have
+issues using it with minicom. Follow this work around to get it running right
+> minicom -s
+Serial port Setup
+    use /dev/ttyUSB0
+    disable Hardware flow control!
+File Transfer Protocols
+    modify C) xmodem -vv -O -k -C 250
+    Disables timeouts, forces 1K transfers, increase retries to 250
+Rock and roll
+
+For reference to send a file start the boot code, before it jumps to the app
+press any key to initiate xmodem transfer
+press ctrl+a then s
+select your new "app" file and all should be well
+

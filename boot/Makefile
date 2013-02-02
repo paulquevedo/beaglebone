@@ -17,6 +17,7 @@ ASM_PIECES = start
 C_PIECES  = boot
 C_PIECES += gpio uart syscalls
 C_PIECES += sdhc ff diskio
+C_PIECES += xmodem
 
 # Define Hardware Platform
 PROCESSOR  = AM335X
@@ -40,12 +41,12 @@ ASM_FLAGS = -g
 ASM_FILES = ${ASM_PIECES:%=%.s}
 ASM_O_FILES = ${ASM_FILES:%.s=%.o}
 
-C_FLAGS = -Wall -Wno-format -c -g -D${PROCESSOR}
+C_FLAGS = -Wall -Wno-format -c -D${PROCESSOR}
 
 ifeq ($(DEBUG), VERBOSE)
-CFLAGS += -g3 -O0 -DDEBUG=1
+C_FLAGS += -g3 -O0 -DDEBUG=1
 else
-CFLAGS += -g -01
+C_FLAGS += -g -O0
 endif
 
 C_FILES  = ${C_PIECES:%=%.c}

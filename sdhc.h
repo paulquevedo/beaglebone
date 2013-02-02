@@ -26,5 +26,8 @@ typedef struct {
 extern int32_t sdhcInit(uint32_t inst);
 extern bool32_t sdhcCardPresent(uint32_t inst);
 extern int32_t sdhcOpen(sdhcCard_t *card);
-extern int32_t sdhcReadBlock(sdhcCard_t *card, uint32_t block, uint32_t *buffer);
+extern int32_t sdhcReadBlock (sdhcCard_t *card, uint32_t block,
+                                                uint32_t *buffer);
+extern int32_t sdhcWriteBlock(sdhcCard_t *card, uint32_t block,
+                                                const uint32_t *buffer);
 #endif

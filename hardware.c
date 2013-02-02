@@ -17,8 +17,8 @@ void hwClearIRQ(uint32_t irqNum)
 
 void hwInstallIRQ(uint32_t irqNum, void (*isrPtr)(void), int priority)
 {
-    int irqBank = irqNum / 32;
-    int irqBit  = 1 << (irqNum & 0x1f);
+    uint32_t irqBank = irqNum / 32;
+    uint32_t irqBit  = 1 << (irqNum & 0x1f);
 
     if (irqNum >= NUM_IRQS || priority < INT_PRIORITY_MAX)
         return;
@@ -33,7 +33,7 @@ void hwInstallIRQ(uint32_t irqNum, void (*isrPtr)(void), int priority)
 /****************************
  * System Tick
  ****************************/
-static uint32_t system_tick_count;
+static volatile uint32_t system_tick_count;
 static void systickISR(void)
 {
     SYSTICK_TISR |= SYSTICK_TISR_OVF_IT_FLAG;
@@ -122,6 +122,11 @@ int main(void)
 
     intEnable();
 
+    gpioClear(HW_LED0_PORT, HW_LED0_PIN);
+    gpioClear(HW_LED1_PORT, HW_LED1_PIN);
+    gpioClear(HW_LED2_PORT, HW_LED2_PIN);
+    gpioClear(HW_LED3_PORT, HW_LED3_PIN);
+
     while (1) {
         c = (c + 1) & 0x3;
         switch (c) {
@@ -130,7 +135,7 @@ int main(void)
         case 2: gpioToggle(HW_LED2_PORT, HW_LED2_PIN); break;
         case 3: gpioToggle(HW_LED3_PORT, HW_LED3_PIN); break;
         }
-        tickDelay(500);
+        tickDelay(100);
     }
 
     return 0;
