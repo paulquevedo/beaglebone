@@ -91,11 +91,11 @@
 #define HW_LED0_PORT GPIO_1
 #define HW_LED0_PIN  24
 #define HW_LED1_PORT GPIO_1
-#define HW_LED1_PIN  21
+#define HW_LED1_PIN  23
 #define HW_LED2_PORT GPIO_1
 #define HW_LED2_PIN  22
 #define HW_LED3_PORT GPIO_1
-#define HW_LED3_PIN  23
+#define HW_LED3_PIN  21
 
 /* System Console */
 #define UART_CONSOLE UART_0

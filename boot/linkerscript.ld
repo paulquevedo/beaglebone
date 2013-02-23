@@ -14,8 +14,7 @@
 
 MEMORY
 {
-    SRAM  (rwx) : ORIGIN = 0x402F0400, LENGTH = 64K
-    L3SRAM(rwx) : ORIGIN = 0x40300000, LENGTH = 62K
+    SRAM  (rwx) : ORIGIN = 0x402F0400, LENGTH = 126K
     STACK (rwx) : ORIGIN = 0x4030F800, LENGTH = 2K
 }
 
@@ -39,13 +38,13 @@ SECTIONS
         . = ALIGN(4);
         *(.text*)
         *(.rodata*)
-    } > L3SRAM
+    } > SRAM
 
     .data :
     {
         . = ALIGN(4);
         *(.data*)
-    }  > L3SRAM
+    }  > SRAM
 
     .bss :
     {
@@ -55,7 +54,7 @@ SECTIONS
         . = ALIGN(4);
         _bss_end = .;
         _heap_start = .;
-    } > L3SRAM
+    } > SRAM
 
     /*
      * The rest of the SRAM is used for the heap and stacks.

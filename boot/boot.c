@@ -337,6 +337,10 @@ static uint32_t imageCopy(void)
         return BAD_ADDRESS;
     }
 
+    if (loadAddr != 0x80000000) {
+        uartPuts("Warning: Load location is not beginning of DDR");
+    }
+
     imageSize -= 8; /* Remove header info */
 #if DEBUG
     iprintf("Loading to addr %08x size %x\n\r", loadAddr, imageSize);
@@ -392,7 +396,7 @@ static int32_t loadNewImage(void)
 
     xmodemInit(&xmodemCfg);
 
-    if (f_open(&fp, "/app", FA_WRITE | FA_CREATE_ALWAYS) != FR_OK) {
+    if (f_open(&fp, "/app_tmp", FA_WRITE | FA_CREATE_ALWAYS) != FR_OK) {
         uartPuts("Failed to create file");
         return ERROR;
     }
@@ -427,6 +431,38 @@ static int32_t loadNewImage(void)
         gpioToggle(HW_LED0_PORT, HW_LED0_PIN);
     }
     f_close(&fp);
+
+    /* Copy the temp file to the app file */
+    if (retVal != ERROR) {
+        FIL fp_app;
+        FIL fp_tmp;
+
+        int size = f_size(&fp);
+
+        f_open (&fp_app, "/app", FA_WRITE | FA_CREATE_ALWAYS);
+        f_open (&fp_tmp, "/app_tmp", FA_READ);
+        f_lseek(&fp_app, 0);
+        f_lseek(&fp_tmp, 0);
+
+        while (size) {
+            int len = size > 512 ? 512 : size;
+
+            if (f_read(&fp_tmp, rxBuffer, len, &bytesWritten) != FR_OK) {
+                uartPuts("Temp File Corrupted");
+                retVal = ERROR;
+                break;
+            }
+            if (f_write(&fp_app, rxBuffer, len, &bytesWritten) != FR_OK) {
+                uartPuts("App File Corrupted");
+                retVal = ERROR;
+                break;
+            }
+
+            size -= len;
+        }
+        f_close(&fp_app);
+        f_close(&fp_tmp);
+    }
 
     return retVal;
 }

@@ -13,6 +13,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "ch.h"
+
 #include "globalDefs.h"
 #include "am335x.h"
 #include "hardware.h"
@@ -20,11 +22,11 @@
 /****************************
  * Interrupt Controller
  ****************************/
-void (*isrVectorTable[NUM_IRQS])(void);
+void __attribute__ ((section (".bss"))) (*isrVectorTable[NUM_IRQS])(void);
 
 void hwClearIRQ(uint32_t irqNum)
 {
-    INTC_ISR_CLEAR(irqNum / 32) = (irqNum % 32);
+    INTC_ISR_CLEAR(irqNum / 32) = 1 << (irqNum & 0x1f);
 }
 
 void hwInstallIRQ(uint32_t irqNum, void (*isrPtr)(void), int priority)
@@ -45,22 +47,14 @@ void hwInstallIRQ(uint32_t irqNum, void (*isrPtr)(void), int priority)
 /****************************
  * System Tick
  ****************************/
-static volatile uint32_t system_tick_count;
 static void systickISR(void)
 {
     SYSTICK_TISR |= SYSTICK_TISR_OVF_IT_FLAG;
     hwClearIRQ(IRQ_TINT1_1MS);
-    system_tick_count++;
-}
-uint32_t tickGet(void)
-{
-    return system_tick_count;
-}
-void tickDelay(uint32_t numTicks)
-{
-    uint32_t startTick = tickGet();
-    while (tickGet() - startTick < numTicks)
-        ;
+
+    chSysLockFromIsr();
+    chSysTimerHandlerI();
+    chSysUnlockFromIsr();
 }
 
 static void systickInit(void)
@@ -91,6 +85,7 @@ static void systickInit(void)
     while (SYSTICK_TWPS & SYSTICK_TWPS_W_PEND_TNIR)
         ;
     SYSTICK_TLDR = 0xFFFFFFE0; /* Overflow after 32 counts */
+
     while (SYSTICK_TWPS & SYSTICK_TWPS_W_PEND_TLDR)
         ;
     SYSTICK_TTGR = 0x0; /* Trigger load of TLDR */
@@ -104,6 +99,41 @@ static void systickInit(void)
     SYSTICK_TCLR = SYSTICK_TCLR_AR | SYSTICK_TCLR_ST; /* Start, auto-reload */
 }
 
+/*
+ * Blinker threads
+ */
+static WORKING_AREA(waThread1, 128);
+static msg_t Thread1(void *p)
+{
+  chRegSetThreadName("blinker1");
+  while (TRUE) {
+    chThdSleepMilliseconds(500);
+    gpioToggle(HW_LED1_PORT, HW_LED1_PIN);
+  }
+  return 0;
+}
+static WORKING_AREA(waThread2, 128);
+static msg_t Thread2(void *p)
+{
+  chRegSetThreadName("blinker2");
+  while (TRUE) {
+    chThdSleepMilliseconds(1000);
+    gpioToggle(HW_LED2_PORT, HW_LED2_PIN);
+  }
+  return 0;
+}
+static WORKING_AREA(waThread3, 128);
+static msg_t Thread3(void *p)
+{
+  chRegSetThreadName("blinker3");
+  while (TRUE) {
+    chThdSleepMilliseconds(2000);
+    gpioToggle(HW_LED3_PORT, HW_LED3_PIN);
+  }
+  return 0;
+}
+
+
 int main(void)
 {
     uartCfg_t uartCfg = {
@@ -112,9 +142,13 @@ int main(void)
                   .rxTrig = 1,
                   .txTrig = 1, },
     };
-    int c = 0;
 
     intDisable();
+
+    gpioConfig(HW_LED0_PORT, HW_LED0_PIN, GPIO_CFG_OUTPUT);
+    gpioConfig(HW_LED1_PORT, HW_LED1_PIN, GPIO_CFG_OUTPUT);
+    gpioConfig(HW_LED2_PORT, HW_LED2_PIN, GPIO_CFG_OUTPUT);
+    gpioConfig(HW_LED3_PORT, HW_LED3_PIN, GPIO_CFG_OUTPUT);
 
     /* Reset interrupt controller */
     memset(isrVectorTable, 0, sizeof(isrVectorTable));
@@ -124,15 +158,12 @@ int main(void)
     INTC_IDLE      = INTC_IDLE_FUNCIDLE; /* Free running clock */
     INTC_THRESHOLD = 0xff;               /* Enable irq generation */
 
-    gpioConfig(HW_LED0_PORT, HW_LED0_PIN, GPIO_CFG_OUTPUT);
-    gpioConfig(HW_LED1_PORT, HW_LED1_PIN, GPIO_CFG_OUTPUT);
-    gpioConfig(HW_LED2_PORT, HW_LED2_PIN, GPIO_CFG_OUTPUT);
-    gpioConfig(HW_LED3_PORT, HW_LED3_PIN, GPIO_CFG_OUTPUT);
-
     uartConfig(UART_CONSOLE, &uartCfg);
     systickInit();
-
-    intEnable();
+    chSysInit();
+    chThdCreateStatic(waThread1, sizeof(waThread1), NORMALPRIO, Thread1, NULL);
+    chThdCreateStatic(waThread2, sizeof(waThread2), NORMALPRIO, Thread2, NULL);
+    chThdCreateStatic(waThread3, sizeof(waThread3), NORMALPRIO, Thread3, NULL);
 
     gpioClear(HW_LED0_PORT, HW_LED0_PIN);
     gpioClear(HW_LED1_PORT, HW_LED1_PIN);
@@ -140,14 +171,8 @@ int main(void)
     gpioClear(HW_LED3_PORT, HW_LED3_PIN);
 
     while (1) {
-        c = (c + 1) & 0x3;
-        switch (c) {
-        case 0: gpioToggle(HW_LED0_PORT, HW_LED0_PIN); break;
-        case 1: gpioToggle(HW_LED1_PORT, HW_LED1_PIN); break;
-        case 2: gpioToggle(HW_LED2_PORT, HW_LED2_PIN); break;
-        case 3: gpioToggle(HW_LED3_PORT, HW_LED3_PIN); break;
-        }
-        tickDelay(100);
+        gpioToggle(HW_LED0_PORT, HW_LED0_PIN);
+        chThdSleepMilliseconds(250);
     }
 
     return 0;

@@ -11,6 +11,7 @@
  * Sam Hocevar.  See http://sam.zoy.org/wtfpl/COPYING for more details.
  *
  *****************************************************************************/
+#include "chconf.h"
 #define BIT_0  0x00000001
 #define BIT_1  0x00000002
 #define BIT_2  0x00000004
@@ -178,8 +179,7 @@ dead_loop:
 /******************************************************************************
  * _irq_eh
  *
- *      IRQ exception handler. Saves context and re-enables interrupt
- *  controller to allow higher priority interrupts
+ *      IRQ exception handler. Doesn't support nesting with ChibiOS... yet
  *
  *  Refer to ARM DEN0013C s12
  *
@@ -195,64 +195,40 @@ dead_loop:
     .global isrVectorTable
     .align 4
 _irq_eh:
-    sub   lr, lr, #4          /* Correct return address */
-    stmfd sp!, {r0-r12, lr}   /* Save context */
-    mrs   r12, SPSR           /* Grab the SPSR */
-    stmfd sp!, {r12}          /* Save SPSR */
+    stmfd sp!, {r0-r3,r12,lr} /* Save context */
 
-    ldr   r0, =INTC_THRESHOLD /* Grab the current priority threshold */
-    ldr   r1, [r0]
-    stmfd sp!, {r1}           /* Save priority threshold */
+#if defined(CH_DBG_SYSTEM_STATE_CHECK)
+    bl   dbg_check_enter_isr
+#endif
+                              /* Change to MODE_SYS, no IRQs enabled.
+                                 Executing ISRs in this mode allows use
+                                 of greater stack */
+    msr   cpsr_c, #(MODE_SYS | I_BIT)
 
-    ldr   r1, =INTC_PRIORITY  /* Grab priority of IRQ */
-    ldr   r2, [r1]
-    and   r2, r2, #MASK_PRIORITY
-    str   r2, [r0]            /* Set current priority as threshold */
+    stmfd sp!, {lr}           /* Save MODE_SYS lr */
 
     ldr   r1, =INTC_SIR_IRQ   /* Grab current IRQ number */
-    ldr   r3, [r1]
-    and   r3, r3, #MASK_SIR_IRQ
-
-    stmfd sp!, {r2}           /* Store IRQ priority */
-
-    mov   r0, #MASK_NEWIRQAGR /* Enable new interrupts on controller */
-    ldr   r1, =INTC_CONTROL
-
-    cmp   r2, #0              /* Ensure current IRQ is maskable */
-    strne r0,[r1]
-    dsb                       /* Wait for pipeline to flush */
-
-    mov   r0, #MODE_SYS       /* Change to system mode */
-    orrne r0, r0, #I_BIT      /* Enable IRQ if priority != 0 */
-    msr   cpsr_c, r0
-
-    stmfd sp!, {lr}            /* Save MODE_SYS lr */
+    ldr   r2, [r1]
+    and   r2, r2, #MASK_SIR_IRQ
 
     ldr   r0, =isrVectorTable  /* Load vector table address */
-    ldr   r1, [r0, r3, lsl #2] /* Load address of the ISR */
+    ldr   r1, [r0, r2, lsl #2] /* Load address of the ISR */
     blx   r1                   /* Jump to isr in ARM Mode */
 
     ldmfd sp!, {lr}            /* Restore MODE_SYS lr */
 
-                               /* Back to IRQ Mode, disable ARM IRQ */
     msr   cpsr_c, #(MODE_IRQ | I_BIT)
 
-    ldmfd sp!, {r2}            /* Retrieve IRQ priority */
+    mov r0, #MASK_NEWIRQAGR    /* Enable new IRQs */
+    ldr r1, =INTC_CONTROL
+    str r0, [r1]
+    dsb
 
-    cmp   r2, #0
-    moveq r0, #MASK_NEWIRQAGR  /* If unmaskable irq now enable new IRQs */
-    ldreq r1, =INTC_CONTROL
-    streq r0, [r1]
+#if defined(CH_DBG_SYSTEM_STATE_CHECK)
+    bl   dbg_check_leave_isr
+#endif
 
-    ldmfd sp!, {r1}            /* Retrieve priority threshold */
-    ldr   r0, =INTC_THRESHOLD
-    str   r1, [r0]             /* Restore priority threshold */
-
-    ldmfd sp!, {r12}
-    msr   spsr, r12            /* Restore SPSR */
-
-    ldmfd sp!, {r0-r12,pc}^    /* Restore context and exit */
-
+    b _port_irq_common
 
 /******************************************************************************
  * unhandled exceptions

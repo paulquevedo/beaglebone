@@ -53,7 +53,7 @@ C_FLAGS = -Wall -Wno-format -c -D${PROCESSOR}
 ifeq ($(DEBUG), VERBOSE)
 C_FLAGS += -g3 -O0 -DDEBUG=1
 else
-C_FLAGS += -g -O0
+C_FLAGS += -g -O1
 endif
 
 C_FILES  = ${C_PIECES:%=%.c}

@@ -160,3 +160,16 @@ press any key to initiate xmodem transfer
 press ctrl+a then s
 select your new "app" file and all should be well
 
+#[ChibiOS]
+To build libChibi.a download the ChibiOS source from their website
+www.chibios.org. Place the folder in the root directory and then run
+make -f libChibi.mak. After that you can compile the main code but just
+running make.
+The folder port_chibios is effectively the same as the GCC ARM port included
+in their download. I've just stripped out the all the thumb code defines
+so I could read it better and understand what it was doing. Note that
+it is not necessary to use any of the chibiOS prologue/epilogue macros
+or the isr decleration macro (essentially just the naked attribute) for any
+isr handlers. It is taken care of in the main irq exception handler in start.S
+All isrs just should be declared as regular void functions. They should not be
+naked

@@ -44,32 +44,39 @@ OBJDUMP = arm-none-eabi-objdump
 OBJCOPY = arm-none-eabi-objcopy
 TI_IMAGE = ${STARTERWARE}/tools/ti_image/tiimage
 
-ASM_FLAGS = -g
-ASM_FILES = ${ASM_PIECES:%=%.s}
-ASM_O_FILES = ${ASM_FILES:%.s=%.o}
+OBJDIR = ${TARGET}_obj
+CHIBIOS_DIR 	 = ./ChibiOS
+CHIBIOS_PORT_DIR = ./port_chibios
 
-C_FLAGS = -Wall -Wno-format -c -D${PROCESSOR}
+INCLUDES   = -I${FATFS}/ -I.
+INCLUDES  += -I${CHIBIOS_DIR}/os/kernel/include
+INCLUDES  += -I${CHIBIOS_PORT_DIR}
 
+CPU_FLAGS  = -mcpu=cortex-a8 -mlong-calls -mno-thumb-interwork -marm
+CPU_FLAGS += -ffunction-sections -falign-functions=16
+
+ASM_FLAGS = -Wall -c -D${PROCESSOR} ${INCLUDES}
+ASM_FILES = ${ASM_PIECES:%=%.S}
+ASM_O_FILES = ${ASM_FILES:%.S=${OBJDIR}/%.o}
+
+C_FLAGS = -Wall -Wno-format -c -D${PROCESSOR} ${INCLUDES}
 ifeq ($(DEBUG), VERBOSE)
 C_FLAGS += -g3 -O0 -DDEBUG=1
 else
 C_FLAGS += -g -O1
 endif
-
 C_FILES  = ${C_PIECES:%=%.c}
-C_O_FILES = ${C_FILES:%.c=%.o}
+C_O_FILES = ${C_FILES:%.c=${OBJDIR}/%.o}
 
 O_FILES = ${ASM_O_FILES} ${C_O_FILES}
-
-CPU_FLAGS = -mcpu=cortex-a8 -mlong-calls -mthumb-interwork -ffunction-sections
-INCLUDE   = -I${FATFS}/ -I.
 
 LD_SCRIPT = linkerscript.ld
 
 # nostartfiles prevents the toolchain from including startup routines.
 LD_FLAGS = -nostartfiles -Map=${TARGET}.map
 
-LIBS  = ${SOURCERY}/arm-none-eabi/lib/libc.a
+LIBS  = libChibi.a
+LIBS += ${SOURCERY}/arm-none-eabi/lib/libc.a
 LIBS += ${SOURCERY}/lib/gcc/arm-none-eabi/4.7.2/libgcc.a
 
 all: ${TARGET}.axf
@@ -86,24 +93,27 @@ all: ${TARGET}.axf
 	@echo
 	@${CC} --version
 
-${TARGET}.axf: ${O_FILES}
+${TARGET}.axf: ${OBJDIR} ${O_FILES}
 	@echo
 	${LD} ${O_FILES} ${LIBS} -T ${LD_SCRIPT} ${LD_FLAGS} -o ${TARGET}.axf
 
-%.o: %.s
-	${AS} ${ASM_FLAGS} ${CPU_FLAGS} -o $@ $<
+${OBJDIR}/%.o: %.S
+	${CC} ${ASM_FLAGS} ${CPU_FLAGS} -o $@ $<
 
-%.o: %.c
-	${CC} ${C_FLAGS} ${INCLUDE} ${CPU_FLAGS} -o $@ -c $<
+${OBJDIR}/%.o: %.c
+	${CC} ${C_FLAGS} ${CPU_FLAGS} -o $@ -c $<
 
-%.o: ${FATFS}/%.c
-	${CC} ${C_FLAGS} ${INCLUDE} ${CPU_FLAGS} -o $@ -c $<
+${OBJDIR}/%.o: ${FATFS}/%.c
+	${CC} ${C_FLAGS} ${CPU_FLAGS} -o $@ -c $<
+
+${OBJDIR}:
+	mkdir ${OBJDIR}
 
 clean:
 	@echo
 	@echo Cleaning up...
 	@echo
-	rm -f *.o
+	rm -rf ${OBJDIR}
 	rm -f ${TARGET}.axf
 	rm -f ${TARGET}.out.s
 	rm -f ${TARGET}.bin

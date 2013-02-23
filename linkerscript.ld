@@ -14,7 +14,7 @@
 
 MEMORY
 {
-    SRAM  (rwx) : ORIGIN = 0x80000000, LENGTH = 1M
+    RAM  (rwx) : ORIGIN = 0x80000000, LENGTH = 1M
     STACK (rwx) : ORIGIN = 0x80100000, LENGTH = 8K
 }
 
@@ -31,20 +31,20 @@ SECTIONS
         _exception_table_addr = .;
         KEEP(*(.exception_table))
         KEEP(*(.exception_handlers))
-    } > SRAM
+    } > RAM
 
     .text :
     {
         . = ALIGN(4);
         *(.text*)
         *(.rodata*)
-    } > SRAM
+    } > RAM
 
     .data :
     {
         . = ALIGN(4);
         *(.data*)
-    }  > SRAM
+    }  > RAM
 
     .bss :
     {
@@ -53,12 +53,12 @@ SECTIONS
         *(.bss*)
         . = ALIGN(4);
         _bss_end = .;
-        _heap_start = .;
-    } > SRAM
+    } > RAM
+    _heap_start = .;
 
     /*
-     * The rest of the SRAM is used for the heap and stacks.
-     * The stack area grows down therefore is starts at the end/top of SRAM.
+     * The rest of the RAM is used for the heap and stacks.
+     * The stack area grows down therefore is starts at the end/top of RAM.
      * The heap grows up and starts at the end of the bss section and
      * ends at the bottom of the stacks.
      */
@@ -91,5 +91,10 @@ SECTIONS
     } > STACK
 
     _stack_top = ALIGN (ORIGIN(STACK) + LENGTH(STACK), 8);
+
+    /* References required by ChibiOS */
+    __heap_base__ = _heap_start;
+    __heap_end__  = _heap_end;
+    __main_thread_stack_base__ = _stack_bottom;
 }
 
