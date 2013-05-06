@@ -16,9 +16,10 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include "arm/asm.h"
+
 #include "globalDefs.h"
 #include "hardware.h"
-
 #include "xmodem.h"
 
 #define SOH 0x01
@@ -227,7 +228,7 @@ int32_t xmodemRecv(uint8_t *outBuffer, uint32_t numBytes)
                 uint16_t crc;
                 uartRead(xmodem.uartFd, xmodem.buffer, packetSize);
                 uartRead(xmodem.uartFd, (uint8_t *)&crc, 2);
-                swap16(crc);
+                _swap16(crc);
                 if (calcCRC(xmodem.buffer, packetSize) == crc) {
                     int i;
                     /* Copy data to output buffer */

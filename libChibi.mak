@@ -13,7 +13,7 @@
 ################################################################################
 
 CHIBIOS_DIR = ./ChibiOS/os/kernel
-CHIBIOS_PORT_DIR = ./port_chibios
+CHIBIOS_PORT_DIR = ./ChibiOS_port
 
 # Name of project/output file:
 
@@ -80,6 +80,7 @@ ${TARGET}.a: ${OBJDIR} ${O_FILES}
 	@echo
 	rm -f $@
 	${AR} crs $@ ${O_FILES}
+	rm -rf ${OBJDIR}
 
 ${OBJDIR}/%.o: ${CHIBIOS_PORT_DIR}/%.S
 	${CC} ${ASM_FLAGS} ${CPU_FLAGS} -o $@ $<
@@ -97,5 +98,4 @@ clean:
 	@echo
 	@echo Cleaning up...
 	@echo
-	rm -rf ${OBJDIR}
 	rm -f ${TARGET}.a

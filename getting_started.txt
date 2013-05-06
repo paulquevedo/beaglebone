@@ -173,3 +173,11 @@ or the isr decleration macro (essentially just the naked attribute) for any
 isr handlers. It is taken care of in the main irq exception handler in start.S
 All isrs just should be declared as regular void functions. They should not be
 naked
+
+#[OpenOCD and Debugging]
+So here's a TODO, Need to stop the systick timer when the JTAG issues a
+processor halt. This probably means the peripheral clock needs to halt
+on a JTAG event. Where is the config for this?
+Also gotta flush the damn cache evertime the JTAG makes a memory access
+otherwise all variable reads are dirty which is throwing me for a loop since I
+forget this all the time.

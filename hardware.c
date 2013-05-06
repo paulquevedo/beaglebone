@@ -11,7 +11,11 @@
  *
  *******************************************************************************/
 #include <stdio.h>
+#include <stdint.h>
 #include <string.h>
+#include "arm/asm.h"
+#include "arm/mmu.h"
+#include "arm/perfmon.h"
 
 #include "ch.h"
 
@@ -99,6 +103,78 @@ static void systickInit(void)
     SYSTICK_TCLR = SYSTICK_TCLR_AR | SYSTICK_TCLR_ST; /* Start, auto-reload */
 }
 
+/****************************
+ * MMU
+ ****************************/
+static void memInit(void)
+{
+    mmuRegion_t ddr = {
+        .physAddr    = 0x80000000,
+        .virtAddr    = 0x80000000,
+        .pages       = 512, /* MBs */
+        .attributes  = MMU_ATTR_INNER_WT_NOWA
+                     | MMU_ATTR_OUTER_WB_WA,
+        .permissions = MMU_PERM_SYS_RW_USR_RW,
+    };
+    mmuRegion_t ocmc = {
+        .physAddr    = 0x40300000,
+        .virtAddr    = 0x40300000,
+        .pages       = 1, /* MBs */
+        .attributes  = MMU_ATTR_INNER_WT_NOWA
+                     | MMU_ATTR_OUTER_WB_WA,
+        .permissions = MMU_PERM_SYS_RW_USR_RW,
+    };
+    mmuRegion_t mmio = {
+        .physAddr    = 0x44000000,
+        .virtAddr    = 0x44000000,
+        .pages       = 960, /* 0x440000 to 0x80000000 */
+        .attributes  = MMU_ATTR_DEVICE_SHARED   /* via L3/L4 interconnect bus */
+                     | MMU_ATTR_EXECUTE_NEVER,
+        .permissions = MMU_PERM_SYS_RW_USR_RW,
+    };
+
+    _mmu_add_region(&ddr);
+    _mmu_add_region(&ocmc);
+    _mmu_add_region(&mmio);
+
+    _dcache_flush();
+    _icache_flush();
+    _branch_predict_invalidate();
+
+    _dcache_enable();
+    _icache_enable();
+    _branch_predict_enable();
+
+    _mmu_enable();
+}
+
+/****************************
+ * Performance Monitor
+ ****************************/
+enum {
+    PERF_CNTR_DCACHE_MISS = 0,
+    PERF_CNTR_DCACHE_USED,
+};
+static void perfMonInit(void)
+{
+    _perfmon_add(PERF_CNTR_DCACHE_MISS, PERF_MON_L1D_CACHE_REFILL);
+    _perfmon_add(PERF_CNTR_DCACHE_USED, PERF_MON_L1D_CACHE);
+
+    _perfmon_enable();
+}
+static void perfMonUpdate(void)
+{
+    /* TODO: something useful with this */
+    volatile uint32_t dcacheMiss = _perfmon_get(PERF_CNTR_DCACHE_MISS);
+    volatile uint32_t dcacheUsed = _perfmon_get(PERF_CNTR_DCACHE_USED);
+
+    if (dcacheUsed == 0xffffffff) {
+        _perfmon_reset(PERF_CNTR_DCACHE_MISS);
+        _perfmon_reset(PERF_CNTR_DCACHE_USED);
+    }
+}
+
+
 /*
  * Blinker threads
  */
@@ -119,6 +195,7 @@ static msg_t Thread2(void *p)
   while (TRUE) {
     chThdSleepMilliseconds(1000);
     gpioToggle(HW_LED2_PORT, HW_LED2_PIN);
+    perfMonUpdate();
   }
   return 0;
 }
@@ -136,6 +213,7 @@ static msg_t Thread3(void *p)
 
 int main(void)
 {
+    extern uint32_t _exception_table_addr;  /* from linkerscript */
     uartCfg_t uartCfg = {
         .baud = BAUD_115200,
         .fifo = { .enable = TRUE,
@@ -143,12 +221,18 @@ int main(void)
                   .txTrig = 1, },
     };
 
-    intDisable();
-
     gpioConfig(HW_LED0_PORT, HW_LED0_PIN, GPIO_CFG_OUTPUT);
     gpioConfig(HW_LED1_PORT, HW_LED1_PIN, GPIO_CFG_OUTPUT);
     gpioConfig(HW_LED2_PORT, HW_LED2_PIN, GPIO_CFG_OUTPUT);
     gpioConfig(HW_LED3_PORT, HW_LED3_PIN, GPIO_CFG_OUTPUT);
+
+    gpioSet(HW_LED0_PORT, HW_LED0_PIN);
+    gpioSet(HW_LED1_PORT, HW_LED1_PIN);
+    gpioSet(HW_LED2_PORT, HW_LED2_PIN);
+    gpioSet(HW_LED3_PORT, HW_LED3_PIN);
+
+    _irq_disable();
+    _irq_set_addr(&_exception_table_addr);
 
     /* Reset interrupt controller */
     memset(isrVectorTable, 0, sizeof(isrVectorTable));
@@ -159,8 +243,11 @@ int main(void)
     INTC_THRESHOLD = 0xff;               /* Enable irq generation */
 
     uartConfig(UART_CONSOLE, &uartCfg);
+    perfMonInit();
+    memInit();
     systickInit();
-    chSysInit();
+    chSysInit();                         /* Enables IRQ's */
+
     chThdCreateStatic(waThread1, sizeof(waThread1), NORMALPRIO, Thread1, NULL);
     chThdCreateStatic(waThread2, sizeof(waThread2), NORMALPRIO, Thread2, NULL);
     chThdCreateStatic(waThread3, sizeof(waThread3), NORMALPRIO, Thread3, NULL);

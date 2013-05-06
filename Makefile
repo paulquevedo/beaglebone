@@ -18,13 +18,15 @@ TARGET = app
 
 # List your asm files here (minus the .s):
 
-ASM_PIECES = start
+ASM_PIECES = start cache
 
 # List your c files here (minus the .c):
 
-C_PIECES  = hardware
+C_PIECES  = mmu perfmon
+C_PIECES += hardware
 C_PIECES += gpio uart syscalls
 C_PIECES += sdhc ff diskio
+
 
 # Define Hardware Platform
 PROCESSOR  = AM335X
@@ -46,9 +48,9 @@ TI_IMAGE = ${STARTERWARE}/tools/ti_image/tiimage
 
 OBJDIR = ${TARGET}_obj
 CHIBIOS_DIR 	 = ./ChibiOS
-CHIBIOS_PORT_DIR = ./port_chibios
+CHIBIOS_PORT_DIR = ./ChibiOS_port
 
-INCLUDES   = -I${FATFS}/ -I.
+INCLUDES   = -I${FATFS}/ -I. -Iarm/
 INCLUDES  += -I${CHIBIOS_DIR}/os/kernel/include
 INCLUDES  += -I${CHIBIOS_PORT_DIR}
 
@@ -100,7 +102,13 @@ ${TARGET}.axf: ${OBJDIR} ${O_FILES}
 ${OBJDIR}/%.o: %.S
 	${CC} ${ASM_FLAGS} ${CPU_FLAGS} -o $@ $<
 
+${OBJDIR}/%.o: arm/%.S
+	${CC} ${ASM_FLAGS} ${CPU_FLAGS} -o $@ $<
+
 ${OBJDIR}/%.o: %.c
+	${CC} ${C_FLAGS} ${CPU_FLAGS} -o $@ -c $<
+
+${OBJDIR}/%.o: arm/%.c
 	${CC} ${C_FLAGS} ${CPU_FLAGS} -o $@ -c $<
 
 ${OBJDIR}/%.o: ${FATFS}/%.c

@@ -17,12 +17,6 @@
 
 #ifndef __HARDWARE_H__
 #define __HARDWARE_H__
-
-#define swap16(x) \
-    asm volatile ("rev16 %[out], %[in]" : [out] "=r" (x) : [in] "r" (x))
-#define swap32(x) \
-    asm volatile ("rev %[out], %[in]" : [out] "=r" (x) : [in] "r" (x))
-
 /**********************
  * Clock Frequencies
  *********************/
@@ -110,9 +104,6 @@ extern void tickDelay(uint32_t numTicks);
 /**********************
  * Interrupts
  *********************/
-#define intEnable()  { asm volatile ("cpsie i"); }
-#define intDisable() { asm volatile ("cpsid i"); }
-
 enum {
     INT_PRIORITY_MAX     = 1,
     INT_PRIORITY_HIGH    = 0x0F,

@@ -114,9 +114,6 @@ bss_loop:
     cmp r0, r1
     blt bss_loop
 
-/* TODO: Branch prediction */
-/* TODO: Remap vectors */
-
 call_main:
     ldr r10,=main   /* Addres of main() */
     mov lr,pc       /* Dummy return */

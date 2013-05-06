@@ -80,7 +80,7 @@ _exception_table:
     b _undefined_eh
     b _swi_eh
     b _prefetch_abort_eh
-    b _abort_eh
+    b _data_abort_eh
     b .
     b _irq_eh
     b _fiq_eh
@@ -124,16 +124,6 @@ _reset_eh:
     ldr r0, =_stack_top
     mov sp, r0
 
-    /* Invalidate branch predication: DDI 0334B s3.2.41 */
-    mov r0, #0
-    mcr p15, #0, r0, c7, c5, #6
-    isb
-
-    /* Enable branch predication:  DDI 0334B s3.2.26 */
-    mrc p15, #0, r0, c1, c0, #0
-    orr r0, r0, #0x00000800       /* BIT_11, Z */
-    mcr p15, #0, r0, c1, c0, #0
-
     /* Watermark the stacks */
     ldr r0, =_stack_bottom
     ldr r1, =_stack_top
@@ -161,11 +151,6 @@ bss_loop:
     str r2, [r0], #4
     cmp r0, r1
     blt bss_loop
-
-    /* Write vector offset register, DDI 0334B s3.2.69 */
-    ldr r0, =_exception_table_addr
-    mcr p15, #0, r0, c12, c0, #0
-    dsb
 
 call_main:
     ldr r10,=main   /* Addres of main() */
@@ -231,6 +216,35 @@ _irq_eh:
     b _port_irq_common
 
 /******************************************************************************
+ * Data Abort EH
+ *
+ *      Read out fault information into registers
+ *
+ * r0: Address of the offending data address
+ * r1: Fault Type
+ * r2: Domain of the address
+ *
+ * Fault Types defined in s3.2.35 of DDI0344D: DFSR Register
+ *
+ ******************************************************************************/
+    .align 4
+_data_abort_eh:
+    mrc p15, #0, r0, c6, c0, #0     /* Read the data fault address register */
+    mrc p15, #0, r3, c5, c0, #0     /* Read the data fault status register */
+
+    and r1, r3, #0xf
+    tst r3, #BIT_10                 /* Bitwise AND, updates the Z flag */
+    orrne r1, r1, #BIT_4            /* OR if zero flag not set */
+    tst r3, #BIT_12
+    orrne r1, r1, #BIT_5            /* Fault Type stored in r1 */
+
+    lsr r2, r3, #4
+    and r2, r2, #0xf                /* Domain stored in r2 */
+
+_data_abort_dead_loop:
+    b   _data_abort_dead_loop
+
+/******************************************************************************
  * unhandled exceptions
  *
  *      Loop forever
@@ -247,10 +261,6 @@ _swi_eh:
     .align 4
 _prefetch_abort_eh:
     b _prefetch_abort_eh
-
-    .align 4
-_abort_eh:
-    b   _abort_eh
 
     .align 4
 _fiq_eh:

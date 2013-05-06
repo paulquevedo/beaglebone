@@ -25,7 +25,7 @@ typedef unsigned char  bool8_t;
 typedef unsigned short bool16_t;
 typedef unsigned int   bool32_t;
 
-#define ARRAY_SIZE (array) (sizeof(array) / sizeof(array[0]))
+#define ARRAY_SIZE(array) (sizeof(array) / sizeof(array[0]))
 #define STR(s)  #s
 #define XSTR(s) STR(s)
 

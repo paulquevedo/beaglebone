@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "arm/asm.h"
 
 #include "globalDefs.h"
 #include "am335x.h"
@@ -569,8 +570,8 @@ int32_t sdhcOpen(sdhcCard_t *card)
     card->scr[0] = SD_DATA(base);
     card->scr[1] = SD_DATA(base);
 
-    swap32(card->scr[0]); /* DATA register is little endian */
-    swap32(card->scr[1]);
+    _swap32(card->scr[0]); /* DATA register is little endian */
+    _swap32(card->scr[1]);
 
     parseCsd(card);
     parseScr(card);
@@ -599,7 +600,7 @@ int32_t sdhcOpen(sdhcCard_t *card)
         for (i = 0; i < cmd6.blkSize / 4; i++) {
             value = SD_DATA(base);
             if (i == 3) {
-                swap32(value);
+                _swap32(value);
                 break;
             }
         }
